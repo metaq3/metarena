@@ -250,7 +250,7 @@ void	G_TouchTriggers( gentity_t *ent ) {
 		}
 
 		// ignore most entities if a spectator
-		if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
+		if ( is_spectator( ent->client ) ) {
 			if ( hit->s.eType != ET_TELEPORT_TRIGGER &&
 				// this is ugly but adding a new ET_? type will
 				// most likely cause network incompatibilities
@@ -312,6 +312,11 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd ) {
 			pm.tracemask = 0;
 		else
 			pm.tracemask = MASK_PLAYERSOLID & ~CONTENTS_BODY;	// spectators can fly through bodies
+//freeze
+		if ( g_dmflags.integer & 512 ) {
+			pm.tracemask &= ~CONTENTS_PLAYERCLIP;
+		}
+//freeze
 		pm.trace = trap_Trace;
 		pm.pointcontents = trap_PointContents;
 
@@ -331,6 +336,12 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd ) {
 	if ( ( client->buttons & BUTTON_ATTACK ) && ! ( client->oldbuttons & BUTTON_ATTACK ) ) {
 		Cmd_FollowCycle_f( ent, 1 );
 	}
+
+//freeze
+	else {
+		respawnSpectator( ent );
+	}
+//freeze
 }
 
 
@@ -355,6 +366,11 @@ qboolean ClientInactivityTimer( gclient_t *client ) {
 		client->inactivityTime = level.time + g_inactivity.integer * 1000;
 		client->inactivityWarning = qfalse;
 	} else if ( !client->pers.localClient ) {
+//freeze
+		if ( g_entities[ client->ps.clientNum ].freezeState ) {
+			return qtrue;
+		}
+//freeze
 		if ( level.time > client->inactivityTime ) {
 			trap_DropClient( client - level.clients, "Dropped due to inactivity" );
 			return qfalse;
@@ -791,7 +807,7 @@ void ClientThink_real( gentity_t *ent ) {
 	}
 
 	// spectators don't do much
-	if ( client->sess.sessionTeam == TEAM_SPECTATOR ) {
+	if ( is_spectator( client ) ) {
 		if ( client->sess.spectatorState == SPECTATOR_SCOREBOARD ) {
 			return;
 		}
@@ -837,6 +853,10 @@ void ClientThink_real( gentity_t *ent ) {
 		client->hook && !( ucmd->buttons & BUTTON_ATTACK ) ) {
 		Weapon_HookFree(client->hook);
 	}
+
+//freeze
+	Hook_Fire( ent );
+//freeze
 
 	// set up for pmove
 	oldEventSequence = client->ps.eventSequence;
@@ -892,6 +912,11 @@ void ClientThink_real( gentity_t *ent ) {
 	}
 	else {
 		pm.tracemask = MASK_PLAYERSOLID;
+//freeze
+		if ( g_dmflags.integer & 512 ) {
+			pm.tracemask &= ~CONTENTS_PLAYERCLIP;
+		}
+//freeze
 	}
 	pm.trace = trap_Trace;
 	pm.pointcontents = trap_PointContents;
@@ -976,7 +1001,7 @@ void ClientThink_real( gentity_t *ent ) {
 		if ( level.time > client->respawnTime ) {
 			// forcerespawn is to prevent users from waiting out powerups
 			if ( g_forcerespawn.integer > 0 && 
-				( level.time - client->respawnTime ) > g_forcerespawn.integer * 1000 ) {
+				( level.time - client->respawnTime ) > g_forcerespawn.integer * 1 ) {
 				respawn( ent );
 				return;
 			}
@@ -1051,17 +1076,16 @@ void SpectatorClientEndFrame( gentity_t *ent ) {
 		}
 		if ( (unsigned)clientNum < MAX_CLIENTS ) {
 			cl = &level.clients[ clientNum ];
-			if ( cl->pers.connected == CON_CONNECTED && cl->sess.sessionTeam != TEAM_SPECTATOR ) {
+			if ( cl->pers.connected == CON_CONNECTED && !is_spectator( cl ) ) {
 				flags = (cl->ps.eFlags & ~(EF_VOTED | EF_TEAMVOTED)) | (ent->client->ps.eFlags & (EF_VOTED | EF_TEAMVOTED));
-				ent->client->ps = cl->ps;
+				Persistant_spectator( ent, cl );
 				ent->client->ps.pm_flags |= PMF_FOLLOW;
 				ent->client->ps.eFlags = flags;
 				return;
 			} else {
 				// drop them to free spectators unless they are dedicated camera followers
 				if ( ent->client->sess.spectatorClient >= 0 ) {
-					ent->client->sess.spectatorState = SPECTATOR_FREE;
-					ClientBegin( ent->client - level.clients );
+					StopFollowing( ent, qtrue );
 				}
 			}
 		}
@@ -1096,7 +1120,7 @@ void ClientEndFrame( gentity_t *ent ) {
 
 	ent->r.svFlags &= ~svf_self_portal2;
 
-	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
+	if ( is_spectator( ent->client ) ) {
 		SpectatorClientEndFrame( ent );
 		return;
 	}

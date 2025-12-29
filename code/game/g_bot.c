@@ -221,7 +221,7 @@ G_AddRandomBot
 void G_AddRandomBot( team_t team ) {
 	int		i, n, num;
 	float	skill;
-	char	*value, netname[36], *teamstr, *skillstr;
+	char	*value, netname[MAX_NETNAME], *teamstr, *skillstr;
 	gclient_t	*cl;
 
 	num = 0;

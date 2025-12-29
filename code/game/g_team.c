@@ -2,6 +2,7 @@
 //
 
 #include "g_local.h"
+#include "q_shared.h"
 
 
 typedef struct teamgame_s {
@@ -117,7 +118,9 @@ AddTeamScore
 void AddTeamScore( vec3_t origin, team_t team, int score ) {
 	int			eventParm;
 	int			otherTeam;
+	int			i;
 	gentity_t	*te;
+	gentity_t *target;
 
 	if ( score == 0 ) {
 		return;
@@ -240,7 +243,7 @@ void Team_CheckDroppedItem( gentity_t *dropped ) {
 Team_ForceGesture
 ================
 */
-static void Team_ForceGesture( team_t team ) {
+void Team_ForceGesture( team_t team ) {
 	int i;
 	gentity_t *ent;
 
@@ -748,6 +751,12 @@ static int Team_TouchOurFlag( gentity_t *ent, gentity_t *other, team_t team ) {
 	}
 #endif
 
+//freeze
+	if ( g_gametype.integer == GT_CTF ) {
+		team_wins( team );
+	}
+//freeze
+
 	cl->ps.powerups[enemy_flag] = 0;
 
 	teamgame.last_flag_capture = level.time;
@@ -924,6 +933,12 @@ gentity_t *Team_GetLocation(gentity_t *ent)
 
 	best = NULL;
 	bestlen = 3*8192.0*8192.0;
+
+//freeze
+	if ( ent->freezeState && is_body( ent->target_ent ) ) {
+		VectorCopy( ent->target_ent->r.currentOrigin, origin );
+	} else
+//freeze
 
 	VectorCopy( ent->r.currentOrigin, origin );
 
@@ -1119,6 +1134,12 @@ void TeamplayInfoMessage( gentity_t *ent ) {
 			if (h < 0) h = 0;
 			if (a < 0) a = 0;
 
+//freeze
+			if ( player->freezeState ) {
+				h = a = 0;
+			}
+//freeze
+
 			j = BG_sprintf( entry, " %i %i %i %i %i %i",
 //				level.sortedClients[i], player->client->pers.teamState.location, h, a, 
 				i, player->client->pers.teamState.location, h, a, 
@@ -1175,10 +1196,17 @@ void CheckTeamStatus( void ) {
 
 /*-----------------------------------------------------------------*/
 
+/*-----------------------------------------------------------------*/
+
 /*QUAKED team_CTF_redplayer (1 0 0) (-16 -16 -16) (16 16 32)
 Only in CTF games.  Red players spawn here at game start.
 */
 void SP_team_CTF_redplayer( gentity_t *ent ) {
+//freeze
+	if ( g_gametype.integer == GT_TEAM ) {
+		ent->classname = "info_player_deathmatch";
+	}
+//freeze
 }
 
 
@@ -1186,6 +1214,11 @@ void SP_team_CTF_redplayer( gentity_t *ent ) {
 Only in CTF games.  Blue players spawn here at game start.
 */
 void SP_team_CTF_blueplayer( gentity_t *ent ) {
+//freeze
+	if ( g_gametype.integer == GT_TEAM ) {
+		ent->classname = "info_player_deathmatch";
+	}
+//freeze
 }
 
 

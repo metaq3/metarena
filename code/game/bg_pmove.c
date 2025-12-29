@@ -6,6 +6,8 @@
 #include "q_shared.h"
 #include "bg_public.h"
 #include "bg_local.h"
+#include "g_local.h"
+#include "local.h"
 
 pmove_t		*pm;
 pml_t		pml;
@@ -649,22 +651,21 @@ PM_GrappleMove
 
 ===================
 */
-static void PM_GrappleMove( void ) {
-	vec3_t vel, v;
+static void PM_GrappleMove( playerState_t* ps ) {
+	vec3_t vel;
 	float vlen;
 
-	VectorScale(pml.forward, -16, v);
-	VectorAdd(pm->ps->grapplePoint, v, v);
-	VectorSubtract(v, pm->ps->origin, vel);
-	vlen = VectorLength(vel);
+	VectorSubtract(ps->grapplePoint, ps->origin, vel);
+	vlen = VectorLength(ps->velocity);
 	VectorNormalize( vel );
 
-	if (vlen <= 100)
-		VectorScale(vel, 10 * vlen, vel);
-	else
-		VectorScale(vel, 800, vel);
+	if (vlen < 600) {
+		VectorScale(vel, 800 - vlen, vel);
 
-	VectorCopy(vel, pm->ps->velocity);
+		VectorAdd(ps->velocity, vel, ps->velocity);
+	}
+
+	ps->pm_flags &= ~PMF_GRAPPLE_PULL;
 
 	pml.groundPlane = qfalse;
 }
@@ -1670,7 +1671,7 @@ static void PM_Weapon( void ) {
 		addTime = 200;
 		break;
 	case WP_GRAPPLING_HOOK:
-		addTime = 400;
+		addTime = 2000;
 		break;
 #ifdef MISSIONPACK
 	case WP_NAILGUN:
@@ -1981,7 +1982,7 @@ void PmoveSingle (pmove_t *pmove) {
 		// flight powerup doesn't allow jump and has different friction
 		PM_FlyMove();
 	} else if (pm->ps->pm_flags & PMF_GRAPPLE_PULL) {
-		PM_GrappleMove();
+		PM_GrappleMove(pm->ps);
 		// We can wiggle a bit
 		PM_AirMove();
 	} else if (pm->ps->pm_flags & PMF_TIME_WATERJUMP) {
@@ -2069,7 +2070,11 @@ void Pmove (pmove_t *pmove) {
 			}
 		}
 		pmove->cmd.serverTime = pmove->ps->commandTime + msec;
-		PmoveSingle( pmove );
+		pmove->movetype = phy_movetype.integer;
+		//::OSDF modded
+    if (0){     PmoveSingle(pmove); }           // Uses all ioq3 default PM_ functions
+    else  { phy_PmoveSingle(pmove); }           // Uses move code inside  ./phy/*   folder
+    //::OSDF end
 
 		if ( pmove->ps->pm_flags & PMF_JUMP_HELD ) {
 			pmove->cmd.upmove = 20;

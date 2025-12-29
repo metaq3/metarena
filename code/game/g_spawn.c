@@ -269,6 +269,12 @@ qboolean G_CallSpawn( gentity_t *ent ) {
 	// check item spawn functions
 	for ( item=bg_itemlist+1 ; item->classname ; item++ ) {
 		if ( !strcmp(item->classname, ent->classname) ) {
+//freeze
+			locationSpawn( ent, item );
+			if ( WeaponDisabled( item ) ) {
+				return qfalse;
+			}
+//freeze
 			G_SpawnItem( ent, item );
 			return qtrue;
 		}
@@ -409,7 +415,7 @@ void G_SpawnGEntityFromSpawnVars( void ) {
 	// check for "notteam" flag (GT_FFA, GT_TOURNAMENT, GT_SINGLE_PLAYER)
 	if ( g_gametype.integer >= GT_TEAM ) {
 		G_SpawnInt( "notteam", "0", &i );
-		if ( i ) {
+		if ( i && !( ent->classname && !Q_stricmp( ent->classname, "info_player_deathmatch" ) ) ) {
 			G_FreeEntity( ent );
 			return;
 		}

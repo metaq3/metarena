@@ -1,5 +1,6 @@
 // Copyright (C) 1999-2000 Id Software, Inc.
 //
+#include "bg_public.h"
 #include "g_local.h"
 
 /*
@@ -122,6 +123,10 @@ int Pickup_Powerup( gentity_t *ent, gentity_t *other ) {
 		if ( g_gametype.integer >= GT_TEAM && other->client->sess.sessionTeam == client->sess.sessionTeam  ) {
 			continue;
 		}
+
+//freeze
+		if ( is_spectator( other->client ) ) continue;
+//freeze
 
 		// if too far away, no sound
 		VectorSubtract( ent->s.pos.trBase, client->ps.origin, delta );
@@ -479,6 +484,11 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 	if (other->health < 1)
 		return;		// dead people can't pickup
 
+//freeze
+	if ( other->freezeState )
+		return;
+//freeze
+
 	// the same pickup rules are used for client side and server side
 	if ( !BG_CanItemBeGrabbed( g_gametype.integer, &ent->s, &other->client->ps ) ) {
 		return;
@@ -603,6 +613,11 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 		ent->think = 0;
 	} else {
 		ent->nextthink = level.time + respawn;
+//freeze
+		if ( ent->item->giType == IT_WEAPON && g_dmflags.integer & 256 && !ent->freeAfterEvent ) {
+			ent->nextthink = level.time;
+		}
+//freeze
 		ent->think = RespawnItem;
 	}
 
@@ -720,6 +735,12 @@ void FinishSpawningItem( gentity_t *ent ) {
 	ent->s.modelindex = ent->item - bg_itemlist;		// store item number in modelindex
 	ent->s.modelindex2 = 0; // zero indicates this isn't a dropped item
 
+//freeze
+	if ( g_dmflags.integer & 256 ) {
+		ent->s.modelindex2 = 255;
+	}
+//freeze
+
 	ent->r.contents = CONTENTS_TRIGGER;
 	ent->touch = Touch_Item;
 	// using an item causes it to respawn
@@ -763,6 +784,11 @@ void FinishSpawningItem( gentity_t *ent ) {
 
 
 qboolean	itemRegistered[MAX_ITEMS];
+//freeze
+qboolean Registered( gitem_t *item ) {
+	return ( item && itemRegistered[ item - bg_itemlist ] );
+}
+//freeze
 
 /*
 ==================
@@ -865,6 +891,9 @@ void ClearRegisteredItems( void ) {
 		RegisterItem( BG_FindItem( "Blue Cube" ) );
 	}
 #endif
+//freeze
+	RegisterWeapon();
+//freeze
 }
 
 /*
@@ -940,7 +969,7 @@ void G_SpawnItem( gentity_t *ent, gitem_t *item ) {
 
 	RegisterItem( item );
 
-	if ( G_ItemDisabled( item ) ) {
+	if ( G_ItemDisabled( item ) || item->giType == IT_WEAPON || item->giType == IT_AMMO || ( item->giType == IT_POWERUP && !g_spawnPowerups.integer ) ) {
 		ent->tag = TAG_DONTSPAWN;
 		return;
 	}
@@ -992,6 +1021,12 @@ void G_BounceItem( gentity_t *ent, trace_t *trace ) {
 		SnapVector( trace->endpos );
 		G_SetOrigin( ent, trace->endpos );
 		ent->s.groundEntityNum = trace->entityNum;
+//freeze
+		if ( ent->pain_debounce_time < level.time - 700 ) {
+			ent->pain_debounce_time = level.time;
+			G_AddEvent( ent, EV_FALL_SHORT, 0 );
+		}
+//freeze
 		return;
 	}
 
@@ -1036,6 +1071,11 @@ void G_RunItem( gentity_t *ent ) {
 	} else {
 		mask = MASK_PLAYERSOLID & ~CONTENTS_BODY;//MASK_SOLID;
 	}
+//freeze
+	if ( is_body_freeze( ent ) )
+		trap_Trace( &tr, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, origin, ent->s.number, mask );
+	else
+//freeze
 	trap_Trace( &tr, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, origin, 
 		ent->r.ownerNum, mask );
 
@@ -1060,6 +1100,14 @@ void G_RunItem( gentity_t *ent ) {
 		if (ent->item && ent->item->giType == IT_TEAM) {
 			Team_FreeEntity(ent);
 		} else {
+//freeze
+			if ( is_body( ent ) ) {
+				if ( level.time - ent->timestamp > 10000 ) {
+					Body_free( ent );
+				}
+				return;
+			}
+//freeze
 			G_FreeEntity( ent );
 		}
 		return;

@@ -1,5 +1,6 @@
 // Copyright (C) 1999-2000 Id Software, Inc.
 //
+#include "bg_public.h"
 #include "g_local.h"
 
 // g_client.c -- client functions that don't happen every frame
@@ -440,6 +441,10 @@ respawn
 void respawn( gentity_t *ent ) {
 	gentity_t	*tent;
 
+//freeze
+	if ( Set_spectator( ent ) ) return;
+//freeze
+
 	if ( ent->health <= 0 )
 		CopyToBodyQue( ent );
 
@@ -839,6 +844,15 @@ const char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 
 	ClientUserinfoChanged( clientNum );
 
+//freeze
+	if ( g_gametype.integer != GT_TOURNAMENT ) {
+		client->sess.wins = 0;
+	}
+	ent->freezeState = qfalse;
+	ent->readyBegin = qfalse;
+//freeze
+
+
 	// don't do the "xxx connected" messages if they were caried over from previous level
 	if ( firstTime ) {
 		G_BroadcastServerCommand( -1, va( "print \"%s" S_COLOR_WHITE " connected\n\"", client->pers.netname ) );
@@ -917,7 +931,7 @@ void ClientBegin( int clientNum ) {
 			CheckTeamLeader( client->sess.sessionTeam );
 	}
 
-	if ( client->sess.sessionTeam != TEAM_SPECTATOR ) {
+	if ( is_spectator( client ) ) {
 		// send event
 		tent = G_TempEntity( client->ps.origin, EV_PLAYER_TELEPORT_IN );
 		tent->s.clientNum = ent->s.clientNum;
@@ -925,7 +939,7 @@ void ClientBegin( int clientNum ) {
 		client->sess.spectatorTime = 0;
 
 		if ( g_gametype.integer != GT_TOURNAMENT && !client->pers.inGame ) {
-			G_BroadcastServerCommand( -1, va("print \"%s" S_COLOR_WHITE " entered the game\n\"", client->pers.netname) );
+			G_BroadcastServerCommand( -1, va("print \"^B%s" S_COLOR_WHITE " also wants to participate!\n\"", client->pers.netname) );
 		}
 	}
 	
@@ -935,6 +949,43 @@ void ClientBegin( int clientNum ) {
 
 	// count current clients and rank for scoreboard
 	CalculateRanks();
+}
+
+/*
+===========
+ClientReset
+
+Resets client's state as if it has been respawned. Client should not be a spectator.
+============
+*/
+void ClientReset(gentity_t *ent) {
+	gclient_t *client = ent->client;
+
+	// health will count down towards max_health
+	ent->health = client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH] * 3 / 2;
+
+	// force the base weapon up
+	client->ps.weapon = WP_ROCKET_LAUNCHER;
+	client->ps.weaponstate = WEAPON_READY;
+
+//freeze
+		SpawnWeapon( client );
+//freeze
+
+	if ( !level.intermissiontime ) {
+//freeze
+		if ( client->ps.stats[ STAT_WEAPONS ] & ( 1 << WP_ROCKET_LAUNCHER ) ) {
+			client->ps.weapon = WP_ROCKET_LAUNCHER;
+		}
+
+		if ( g_startArmor.integer > 0 ) {
+			client->ps.stats[ STAT_ARMOR ] = g_startArmor.integer;
+			if ( client->ps.stats[ STAT_ARMOR ] > client->ps.stats[ STAT_MAX_HEALTH ] * 2 ) {
+				client->ps.stats[ STAT_ARMOR ] = client->ps.stats[ STAT_MAX_HEALTH ] * 2;
+			}
+		}
+//freeze
+	}
 }
 
 
@@ -1066,16 +1117,16 @@ void ClientSpawn(gentity_t *ent) {
 	ent->client = &level.clients[index];
 	ent->inuse = qtrue;
 	ent->classname = "player";
-	if ( isSpectator ) {
-		ent->takedamage = qfalse;
-		ent->r.contents = 0;
-		ent->clipmask = MASK_PLAYERSOLID & ~CONTENTS_BODY;
-		client->ps.pm_type = PM_SPECTATOR;
-	} else {
+	// if ( isSpectator ) {
+	// 	ent->takedamage = qfalse;
+	// 	ent->r.contents = 0;
+	// 	ent->clipmask = MASK_PLAYERSOLID & ~CONTENTS_BODY;
+	// 	client->ps.pm_type = PM_SPECTATOR;
+	// } else {
 		ent->takedamage = qtrue;
 		ent->r.contents = CONTENTS_BODY;
 		ent->clipmask = MASK_PLAYERSOLID;
-	}
+	// }
 	ent->die = player_die;
 	ent->waterlevel = 0;
 	ent->watertype = 0;
@@ -1098,7 +1149,7 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.ammo[WP_GRAPPLING_HOOK] = -1;
 
 	// health will count down towards max_health
-	ent->health = client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH] + 25;
+	ent->health = client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH] * 3 / 2;
 
 	G_SetOrigin( ent, spawn_origin );
 	VectorCopy( spawn_origin, client->ps.origin );
@@ -1114,8 +1165,12 @@ void ClientSpawn(gentity_t *ent) {
 		G_KillBox( ent );
 
 	// force the base weapon up
-	client->ps.weapon = WP_MACHINEGUN;
+	client->ps.weapon = WP_ROCKET_LAUNCHER;
 	client->ps.weaponstate = WEAPON_READY;
+
+//freeze
+		SpawnWeapon( client );
+//freeze
 
 	// don't allow full run speed for a bit
 	client->ps.pm_flags |= PMF_TIME_KNOCKBACK;
@@ -1134,6 +1189,9 @@ void ClientSpawn(gentity_t *ent) {
 	} else {
 		if ( !isSpectator )
 			trap_LinkEntity( ent );
+//freeze
+		if ( !( g_dmflags.integer & 1024 ) )
+//freeze
 		// fire the targets of the spawn point
 		G_UseTargets( spawnPoint, ent );
 
@@ -1146,6 +1204,19 @@ void ClientSpawn(gentity_t *ent) {
 				break;
 			}
 		}
+
+//freeze
+		if ( client->ps.stats[ STAT_WEAPONS ] & ( 1 << WP_ROCKET_LAUNCHER ) ) {
+			client->ps.weapon = WP_ROCKET_LAUNCHER;
+		}
+
+		if ( g_startArmor.integer > 0 ) {
+			client->ps.stats[ STAT_ARMOR ] = g_startArmor.integer;
+			if ( client->ps.stats[ STAT_ARMOR ] > client->ps.stats[ STAT_MAX_HEALTH ] * 2 ) {
+				client->ps.stats[ STAT_ARMOR ] = client->ps.stats[ STAT_MAX_HEALTH ] * 2;
+			}
+		}
+//freeze
 	}
 
 	// run a client frame to drop exactly to the floor,
@@ -1193,7 +1264,7 @@ void ClientDisconnect( int clientNum ) {
 
 	// stop any following clients
 	for ( i = 0 ; i < level.maxclients ; i++ ) {
-		if ( level.clients[i].sess.sessionTeam == TEAM_SPECTATOR
+		if ( is_spectator( &level.clients[i] )
 			&& level.clients[i].sess.spectatorState == SPECTATOR_FOLLOW
 			&& level.clients[i].sess.spectatorClient == clientNum ) {
 			StopFollowing( &g_entities[i], qtrue );
@@ -1202,7 +1273,7 @@ void ClientDisconnect( int clientNum ) {
 
 	// send effect if they were completely connected
 	if ( ent->client->pers.connected == CON_CONNECTED 
-		&& ent->client->sess.sessionTeam != TEAM_SPECTATOR ) {
+		&& !is_spectator (ent->client ) ) {
 		tent = G_TempEntity( ent->client->ps.origin, EV_PLAYER_TELEPORT_OUT );
 		tent->s.clientNum = ent->s.clientNum;
 

@@ -871,27 +871,30 @@ char *strtok( char *strToken, const char *strDelimit ) {
 	return strToken;
 }
 
-
 char *BG_StripColor( char *string ) {
-	char	*d;
-	char	*s;
+	char*	d;
+	char*	s;
 	int		c;
+        qboolean hadColor = qfalse;
 
 	s = string;
 	d = string;
-	while ((c = *s) != 0 ) 
-	{
-		if ( Q_IsColorString( s ) )
+	while ((c = *s) != 0 ) {
+		if ( Q_IsColorString( s ) ) {
 			s++;
-		else {
-			*d = c; d++;
+                        hadColor = qtrue;
+		}
+		else if ( c >= 0x20 && c <= 0x7E ) {
+			*d++ = c;
 		}
 		s++;
 	}
 	*d = '\0';
-	return string;
+        if(hadColor)
+            return BG_StripColor( string );
+        else
+            return string;
 }
-
 
 char *EncodedString( const char *in ) 
 {
@@ -1034,90 +1037,74 @@ char *Q_stristr( const char * str1, const char * str2 )
 BG_CleanName
 ============
 */
-void BG_CleanName( const char *in, char *out, int outSize, const char *blankString ) {
-	int		len, colorlessLen;
-	char	ch;
-	char	*p;
-	int		spaces;
+void BG_CleanName( const char *in, char *out, int outSize, const char *blankString )
+{
+    int outpos = 0, colorlessLen = 0, spaces = 0, notblack=0;
+    qboolean black = qfalse;
+    qboolean anyblack = qfalse;
 
-	//save room for trailing null byte
-	outSize--;
+    // discard leading spaces
+    for(; *in == ' '; in++);
 
-	len = 0;
-	colorlessLen = 0;
-	p = out;
-	*p = '\0';
-	spaces = 0;
+    for(; *in && outpos < outSize - 1; in++)
+    {
+        out[outpos] = *in;
 
-	while( 1 ) {
-		ch = *in++;
-		if( !ch ) {
-			break;
-		}
+        if(*in == ' ')
+        {
+            // don't allow too many consecutive spaces
+            if(spaces > 2)
+                continue;
 
-		// don't allow leading spaces
-		if( *p == '\0' && ch <= ' ' ) {
-			continue;
-		}
+            spaces++;
+        }
+        else if(outpos > 0 && out[outpos - 1] == Q_COLOR_ESCAPE)
+        {
+            if(Q_IsColorString(&out[outpos - 1]))
+            {
+                colorlessLen--;
 
-		// check colors
-		if( ch == Q_COLOR_ESCAPE ) {
-			// solo trailing carat is not a color prefix
-			if( !*in ) {
-				break;
-			}
+                if(ColorIndex(*in) == 0)
+                {
+                    // Disallow color black in names to prevent players
+                    // from getting advantage playing in front of black backgrounds
+                    //outpos--;
+                    //continue;
+                    black = qtrue;
+		    anyblack = qtrue;
+                }
+                else
+                    black = qfalse;
+            }
+            else
+            {
+                spaces = 0;
+                colorlessLen++;
+            }
+        }
+        else
+        {
+            spaces = 0;
+            colorlessLen++;
+            if(!black && (Q_isalpha(*in) || (*in>='0' && *in<='9') ) )
+                notblack++;
+        }
 
-			// don't allow black in a name, period
-			if( ColorIndex(*in) == 0 ) {
-				in++;
-				continue;
-			}
+        outpos++;
+    }
 
-			// make sure room in dest for both chars
-			if( len > outSize - 2 ) {
-				break;
-			}
+    out[outpos] = '\0';
 
-			*out++ = ch;
-			*out++ = *in++;
-			len += 2;
-			continue;
-		}
+    //black color was used but no non-black alnum char
+    if(notblack<1 && anyblack)
+        Q_CleanStr(out);
 
-		// let's keep it in printable range
-		if ( ch < ' ' || ch > 126 ) {
-			continue;
-		}
-
-		// don't allow too many consecutive spaces
-		if( ch == ' ' ) {
-			spaces++;
-			if( spaces > 2 ) {
-				continue;
-			}
-		}
-		else {
-			spaces = 0;
-		}
-
-		if( len > outSize - 1 ) {
-			break;
-		}
-
-		*out++ = ch;
-		colorlessLen++;
-		len++;
-	}
-	*out = '\0';
-
-	if ( blankString ) {
-		// don't allow empty names
-		if( *p == '\0' || colorlessLen == 0 ) {
-			Q_strncpyz( p, blankString, outSize );
-		}
-	}
+    // don't allow empty names
+    if( *out == '\0' || colorlessLen == 0) {
+        //Q_strncpyz(out, va("Nameless%i",clientNum), outSize );
+        Q_strncpyz(out, blankString, outSize );
+    }
 }
-
 
 /*
 ===================

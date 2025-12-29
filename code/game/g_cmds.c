@@ -1,5 +1,6 @@
 // Copyright (C) 1999-2000 Id Software, Inc.
 //
+#include "bg_public.h"
 #include "g_local.h"
 
 #ifdef MISSIONPACK
@@ -47,6 +48,10 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 		}
 
 		perfect = ( cl->ps.persistant[PERS_RANK] == 0 && cl->ps.persistant[PERS_KILLED] == 0 ) ? 1 : 0;
+
+//freeze
+		scoreFlags = cl->sess.wins;
+//freeze
 
 		j = BG_sprintf( entry, " %i %i %i %i %i %i %i %i %i %i %i %i %i %i",
 			level.sortedClients[i],
@@ -456,7 +461,7 @@ Cmd_Kill_f
 =================
 */
 void Cmd_Kill_f( gentity_t *ent ) {
-	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
+	if ( is_spectator( ent->client ) ) {
 		return;
 	}
 	if (ent->health <= 0) {
@@ -464,7 +469,7 @@ void Cmd_Kill_f( gentity_t *ent ) {
 	}
 	ent->flags &= ~FL_GODMODE;
 	ent->client->ps.stats[STAT_HEALTH] = ent->health = -999;
-	player_die (ent, ent, ent, 100000, MOD_SUICIDE);
+	player_die (ent, ent, ent, 100000, MOD_BFG_SPLASH);
 }
 
 
@@ -712,7 +717,7 @@ void StopFollowing( gentity_t *ent, qboolean release ) {
 	client = ent->client;
 
 	client->ps.persistant[ PERS_TEAM ] = TEAM_SPECTATOR;	
-	client->sess.sessionTeam = TEAM_SPECTATOR;	
+	// client->sess.sessionTeam = TEAM_SPECTATOR;
 	if ( release ) {
 		client->ps.stats[STAT_HEALTH] = ent->health = 1;
 		memset( client->ps.powerups, 0, sizeof ( client->ps.powerups ) );
@@ -766,6 +771,16 @@ static void Cmd_Team_f( gentity_t *ent ) {
 		ent->client->sess.losses++;
 	}
 
+//freeze
+	if ( ent->freezeState ) {
+		if ( ent->client->sess.spectatorState == SPECTATOR_FOLLOW ) {
+			StopFollowing( ent, qtrue );
+		}
+		ent->client->ps.persistant[ PERS_TEAM ] = ent->client->sess.sessionTeam;
+		return;
+	}
+//freeze
+
 	trap_Argv( 1, s, sizeof( s ) );
 
 	if ( SetTeam( ent, s ) ) {
@@ -800,9 +815,11 @@ static void Cmd_Follow_f( gentity_t *ent ) {
 	if ( &level.clients[ i ] == ent->client ) {
 		return;
 	}
+	
+	if ( ent->freezeState && !is_spectator( ent->client ) ) return;
 
 	// can't follow another spectator
-	if ( level.clients[ i ].sess.sessionTeam == TEAM_SPECTATOR ) {
+	if ( is_spectator( &level.clients[ i ] ) ) {
 		return;
 	}
 
@@ -831,6 +848,11 @@ void Cmd_FollowCycle_f( gentity_t *ent, int dir ) {
 	int		clientnum;
 	int		original;
 	gclient_t	*client;
+
+//freeze
+	if ( ent->freezeState && !is_spectator( ent->client ) ) return;
+	if ( Set_Client( ent ) ) return;
+//freeze
 
 	// if they are playing a tournement game, count as a loss
 	if ( (g_gametype.integer == GT_TOURNAMENT )
@@ -865,8 +887,17 @@ void Cmd_FollowCycle_f( gentity_t *ent, int dir ) {
 			continue;
 		}
 
+		if ( &level.clients[ clientnum ] == ent->client ) {
+			if ( ent->client->sess.spectatorState == SPECTATOR_FOLLOW ) {
+				StopFollowing( ent, qtrue );
+				ent->client->ps.pm_flags |= PMF_TIME_KNOCKBACK;
+				ent->client->ps.pm_time = 100;
+				return;
+			}
+		}
+
 		// can't follow another spectator
-		if ( level.clients[ clientnum ].sess.sessionTeam == TEAM_SPECTATOR ) {
+		if ( is_spectator( &level.clients[ clientnum ] ) ) {
 			continue;
 		}
 
@@ -1907,6 +1938,12 @@ void ClientCommand( int clientNum ) {
 		Cmd_SetViewpos_f( ent );
 	else if (Q_stricmp (cmd, "stats") == 0)
 		Cmd_Stats_f( ent );
+//freeze
+	else if ( Q_stricmp( cmd, "drop" ) == 0 )
+		Cmd_Drop_f( ent );
+	else if ( Q_stricmp( cmd, "ready" ) == 0 )
+		Cmd_Ready_f( ent );
+//freeze
 	else
 		trap_SendServerCommand( clientNum, va( "print \"unknown cmd %s\n\"", cmd ) );
 }

@@ -1,6 +1,7 @@
 // Copyright (C) 1999-2000 Id Software, Inc.
 //
 #include "g_local.h"
+#include "local.h"
 
 #define	MISSILE_PRESTEP_TIME	50
 
@@ -377,11 +378,14 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 		ent->think = Weapon_HookThink;
 		ent->nextthink = level.time + FRAMETIME;
 
-		ent->parent->client->ps.pm_flags |= PMF_GRAPPLE_PULL;
+		// ent->parent->client->ps.pm_flags |= PMF_GRAPPLE_PULL;
 		VectorCopy( ent->r.currentOrigin, ent->parent->client->ps.grapplePoint);
 
+		PM_GrappleMove(&ent->parent->client->ps);
 		trap_LinkEntity( ent );
 		trap_LinkEntity( nent );
+
+		Weapon_HookFree(ent);
 
 		return;
 	}
@@ -554,7 +558,7 @@ gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t dir) {
 
 	bolt = G_Spawn();
 	bolt->classname = "grenade";
-	bolt->nextthink = level.time + 2500;
+	bolt->nextthink = level.time + 2600;
 	bolt->think = G_ExplodeMissile;
 	bolt->s.eType = ET_MISSILE;
 	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
@@ -660,9 +664,9 @@ gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->s.weapon = WP_ROCKET_LAUNCHER;
 	bolt->r.ownerNum = self->s.number;
 	bolt->parent = self;
-	bolt->damage = 100;
-	bolt->splashDamage = 100;
-	bolt->splashRadius = 120;
+	bolt->damage = phy_rocket_damage.integer;
+	bolt->splashDamage = phy_rocket_splashDamage.integer;
+	bolt->splashRadius = phy_rocket_splashRadius.integer;
 	bolt->methodOfDeath = MOD_ROCKET;
 	bolt->splashMethodOfDeath = MOD_ROCKET_SPLASH;
 	bolt->clipmask = MASK_SHOT;
@@ -680,7 +684,7 @@ gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
 	VectorCopy( start, bolt->s.pos.trBase );
 	SnapVector( bolt->s.pos.trBase );			// save net bandwidth
-	VectorScale( dir, 900, bolt->s.pos.trDelta );
+	VectorScale( dir, phy_rocket_speed.integer, bolt->s.pos.trDelta );
 	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
 	VectorCopy (start, bolt->r.currentOrigin);
 
@@ -728,7 +732,7 @@ gentity_t *fire_grapple (gentity_t *self, vec3_t start, vec3_t dir) {
 	hook->s.pos.trTime = hooktime;
 	VectorCopy( start, hook->s.pos.trBase );
 	SnapVector( hook->s.pos.trBase );			// save net bandwidth
-	VectorScale( dir, 800, hook->s.pos.trDelta );
+	VectorScale( dir, phy_rocket_speed.integer * 10, hook->s.pos.trDelta );
 	SnapVector( hook->s.pos.trDelta );			// save net bandwidth
 	VectorCopy (start, hook->r.currentOrigin);
 

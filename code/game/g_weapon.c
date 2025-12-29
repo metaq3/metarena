@@ -95,6 +95,15 @@ qboolean CheckGauntletAttack( gentity_t *ent ) {
 		tent->s.weapon = ent->s.weapon;
 	}
 
+//freeze
+	if ( is_body( traceEnt ) ) {
+		tent = G_TempEntity( tr.endpos, EV_MISSILE_HIT );
+		tent->s.otherEntityNum = traceEnt->s.number;
+		tent->s.eventParm = DirToByte( tr.plane.normal );
+		tent->s.weapon = ent->s.weapon;
+	}
+//freeze
+
 	if ( !traceEnt->takedamage ) {
 		return qfalse;
 	}
@@ -213,6 +222,11 @@ static void Bullet_Fire( gentity_t *ent, float spread, int damage ) {
 			if( LogAccuracyHit( traceEnt, ent ) ) {
 				ent->client->accuracy_hits++;
 			}
+//freeze
+		} else if ( is_body( traceEnt ) ) {
+			tent = G_TempEntity( tr.endpos, EV_BULLET_HIT_FLESH );
+			tent->s.eventParm = traceEnt->s.number;
+//freeze
 		} else {
 			tent = G_TempEntity( tr.endpos, EV_BULLET_HIT_WALL );
 			tent->s.eventParm = DirToByte( tr.plane.normal );
@@ -469,7 +483,7 @@ void weapon_railgun_fire( gentity_t *ent ) {
 	int			passent;
 	gentity_t	*unlinkedEntities[MAX_RAIL_HITS];
 
-	damage = 100 * s_quadFactor;
+	damage = g_rgDamage.integer * s_quadFactor;
 
 	VectorMA( muzzle_origin, 8192.0, forward, end );
 
@@ -592,8 +606,11 @@ GRAPPLING HOOK
 
 void Weapon_GrapplingHook_Fire (gentity_t *ent)
 {
+//freeze
+	AngleVectors( ent->client->ps.viewangles, forward, right, up );
+//freeze
 	if (!ent->client->fireHeld && !ent->client->hook)
-		fire_grapple (ent, muzzle, forward);
+		fire_grapple (ent, ent->client->ps.origin, forward);
 
 	ent->client->fireHeld = qtrue;
 }
@@ -601,6 +618,9 @@ void Weapon_GrapplingHook_Fire (gentity_t *ent)
 
 void Weapon_HookFree (gentity_t *ent)
 {
+//freeze
+	ent->parent->timestamp = level.time;
+//freeze
 	ent->parent->client->hook = NULL;
 	ent->parent->client->ps.pm_flags &= ~PMF_GRAPPLE_PULL;
 	G_FreeEntity( ent );
@@ -642,7 +662,7 @@ void Weapon_LightningFire( gentity_t *ent ) {
 	gentity_t	*traceEnt, *tent;
 	int			damage, i, passent;
 
-	damage = 8 * s_quadFactor;
+	damage = g_lgDamage.integer * s_quadFactor;
 
 	passent = ent->s.number;
 
@@ -705,6 +725,13 @@ void Weapon_LightningFire( gentity_t *ent ) {
 			tent->s.otherEntityNum = traceEnt->s.number;
 			tent->s.eventParm = DirToByte( tr.plane.normal );
 			tent->s.weapon = ent->s.weapon;
+//freeze
+		} else if ( is_body( traceEnt ) ) {
+			tent = G_TempEntity( tr.endpos, EV_MISSILE_HIT );
+			tent->s.otherEntityNum = traceEnt->s.number;
+			tent->s.eventParm = DirToByte( tr.plane.normal );
+			tent->s.weapon = ent->s.weapon;
+//freeze
 		} else if ( !( tr.surfaceFlags & SURF_NOIMPACT ) ) {
 			tent = G_TempEntity( tr.endpos, EV_MISSILE_MISS );
 			tent->s.eventParm = DirToByte( tr.plane.normal );

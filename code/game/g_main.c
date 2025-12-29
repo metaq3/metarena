@@ -1346,6 +1346,10 @@ static void CheckExitRules( void ) {
 		return;
 	}
 
+//freeze
+	CheckDelay();
+//freeze
+
 	// check for sudden death
 	if ( ScoreIsTied() ) {
 		// always wait for sudden death
@@ -1395,7 +1399,7 @@ static void CheckExitRules( void ) {
 		}
 	}
 
-	if ( g_gametype.integer >= GT_CTF && g_capturelimit.integer ) {
+	if ( g_gametype.integer >= GT_TEAM && g_capturelimit.integer ) {
 
 		if ( level.teamScores[TEAM_RED] >= g_capturelimit.integer ) {
 			G_BroadcastServerCommand( -1, "print \"Red hit the capturelimit.\n\"" );
@@ -1622,6 +1626,12 @@ static void CheckTournament( void ) {
 		} else if ( level.numPlayingClients < 2 ) {
 			notEnough = qtrue;
 		}
+
+//freeze
+		if ( !notEnough ) {
+			notEnough = readyCheck();
+		}
+//freeze
 
 		if ( notEnough ) {
 			if ( level.warmupTime != -1 ) {

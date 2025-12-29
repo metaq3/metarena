@@ -3,6 +3,7 @@
 // g_combat.c
 
 #include "g_local.h"
+#include "q_shared.h"
 
 
 /*
@@ -30,6 +31,9 @@ Adds score to both the client and his team
 ============
 */
 void AddScore( gentity_t *ent, vec3_t origin, int score ) {
+	int i;
+	gentity_t *target;
+	qboolean team_is_dead;
 	if ( !ent->client ) {
 		return;
 	}
@@ -42,7 +46,20 @@ void AddScore( gentity_t *ent, vec3_t origin, int score ) {
 	//
 	ent->client->ps.persistant[PERS_SCORE] += score;
 	if ( g_gametype.integer == GT_TEAM ) {
-		AddTeamScore( origin, ent->client->ps.persistant[PERS_TEAM], score );
+		team_is_dead = qtrue;
+
+		for (i = 0; i < MAX_GENTITIES; ++i) {
+			target = &g_entities[i];
+
+			if (target->client && !is_body_freeze(target) && !OnSameTeam(target, ent)) {
+				team_is_dead = qfalse;
+				break;
+			}
+		}
+
+		if (team_is_dead) {
+			team_wins( ent->client->sess.sessionTeam );
+		}
 	}
 	CalculateRanks();
 }
@@ -77,7 +94,7 @@ void TossClientItems( gentity_t *self ) {
 		}
 	}
 
-	if ( weapon > WP_MACHINEGUN && weapon != WP_GRAPPLING_HOOK && 
+	if ( g_dropWeapons.integer && weapon > WP_MACHINEGUN && weapon != WP_GRAPPLING_HOOK && 
 		self->client->ps.ammo[ weapon ] ) {
 		// find the item type for this weapon
 		item = BG_FindItemForWeapon( weapon );
@@ -91,6 +108,15 @@ void TossClientItems( gentity_t *self ) {
 
 	// drop all the powerups if not in teamplay
 	if ( g_gametype.integer != GT_TEAM ) {
+		for ( i = 1; i < HI_NUM_HOLDABLE; i++ ) {
+			if ( i == HI_KAMIKAZE ) continue;
+			if ( bg_itemlist[ self->client->ps.stats[ STAT_HOLDABLE_ITEM ] ].giTag == i ) {
+				item = BG_FindItemForHoldable( i );
+				if ( !item ) break;
+				drop = Drop_Item( self, item, 45 );
+				break;
+			}
+		}
 		angle = 45;
 		for ( i = 1 ; i < PW_NUM_POWERUPS ; i++ ) {
 			if ( self->client->ps.powerups[ i ] > level.time ) {
@@ -561,7 +587,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		if ( client->pers.connected != CON_CONNECTED ) {
 			continue;
 		}
-		if ( client->sess.sessionTeam != TEAM_SPECTATOR ) {
+		if ( is_spectator( client ) ) {
 			continue;
 		}
 		if ( client->sess.spectatorClient == self->s.number ) {
@@ -605,10 +631,20 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
 	// don't allow respawn until the death anim is done
 	// g_forcerespawn may force spawning at some later time
-	self->client->respawnTime = level.time + 1700;
+	self->client->respawnTime = level.time + 100;
 
 	// remove powerups
 	memset( self->client->ps.powerups, 0, sizeof(self->client->ps.powerups) );
+
+//freeze
+	player_freeze( self, attacker, meansOfDeath );
+	if ( self->freezeState ) {
+		G_AddEvent( self, EV_DEATH1 + ( rand() % 3 ), killer );
+		trap_LinkEntity( self );
+		return;
+	}
+	self->r.maxs[ 2 ] = -8;
+//freeze
 
 	// never gib in a nodrop
 	if ( (self->health <= GIB_HEALTH && !(contents & CONTENTS_NODROP) && g_blood.integer) || meansOfDeath == MOD_SUICIDE) {
@@ -911,8 +947,22 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	if ( knockback && targ->client ) {
 		vec3_t	kvel;
 		float	mass;
+		float kvel_z;
+		float scale = 1;
 
 		mass = 200;
+
+		//::OSDF modded. Different vq3/cpm knockback scaling
+        if ((targ == attacker) 
+             && (mod == MOD_ROCKET_SPLASH || mod == MOD_ROCKET)
+             && (phy_movetype.integer == 0)){
+          scale = 1.2; 
+        }
+
+        kvel_z = dir[2] * phy_knockback.value * (float)knockback / mass;  // Calculate vertical knockback without scale
+        VectorScale (dir, scale * phy_knockback.value * (float)knockback / mass, kvel); // Scale knockback
+        kvel[2] = kvel_z; // Apply vertical scale
+        //::OSDF end
 
 		VectorScale (dir, g_knockback.value * (float)knockback / mass, kvel);
 		VectorAdd (targ->client->ps.velocity, kvel, targ->client->ps.velocity);
@@ -965,6 +1015,14 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		}
 	}
 
+//freeze
+		if ( client ) {
+			if ( targ != attacker && level.time - client->respawnTime < 1000 ) return;
+		} else {
+			if ( DamageBody( targ, attacker, dir, mod, knockback ) ) return;
+		}
+//freeze
+
 	// battlesuit protects from all radius damage (but takes knockback)
 	// and protects 50% against all damage
 	if ( client && client->ps.powerups[PW_BATTLESUIT] ) {
@@ -979,6 +1037,10 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	// calculated after knockback, so rocket jumping works
 	if ( targ == attacker) {
 		damage *= 0.5;
+
+		if (g_dmflags.integer & DF_NO_SELF_HURT) {
+			return;
+		}
 	}
 
 	if ( damage < 1 ) {
