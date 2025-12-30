@@ -12,7 +12,7 @@ dirs:
 
 .PHONY: all dirs
 
-$(PK3): vm/qagame.qvm vm/cgame.qvm vm/ui.qvm
+$(PK3): vm/qagame.qvm
 	$(7Z) $@ vm/*.qvm vm/*.jts ../../assets/*
 
 cc = cd vm/$1 && $(Q3LCC) $2 -o $(notdir $@).tmp ../../$< && mv $(notdir $@).tmp $(notdir $@)
@@ -23,17 +23,17 @@ ui_cc = $(call cc,ui,$(UI_CFLAGS))
 vm/qagame.qvm: $(qa_asm)
 	$(Q3ASM) -o $@ $(qa_asm)
 
-vm/cgame.qvm: $(cg_asm)
-	$(Q3ASM) -o $@ $(cg_asm)
+# vm/cgame.qvm: $(cg_asm)
+# 	$(Q3ASM) -o $@ $(cg_asm)
 
-vm/ui.qvm: $(ui_asm)
-	$(Q3ASM) -o $@ $(ui_asm)
+# vm/ui.qvm: $(ui_asm)
+# 	$(Q3ASM) -o $@ $(ui_asm)
 
 vm/game/%.asm: $(QADIR)/%.c; $(qa_cc)
-vm/cgame/%.asm: $(QADIR)/%.c; $(cg_cc)
-vm/cgame/%.asm: $(CGDIR)/%.c; $(cg_cc)
-vm/ui/%.asm: $(QADIR)/%.c; $(ui_cc)
-vm/ui/%.asm: $(UIDIR)/%.c; $(ui_cc)
+# vm/cgame/%.asm: $(QADIR)/%.c; $(cg_cc)
+# vm/cgame/%.asm: $(CGDIR)/%.c; $(cg_cc)
+# vm/ui/%.asm: $(QADIR)/%.c; $(ui_cc)
+# vm/ui/%.asm: $(UIDIR)/%.c; $(ui_cc)
 
 clean:
 	$(RM) -rf *.pk3 vm/ ../cgame/*.asm ../game/*.asm ../ui/*.asm
