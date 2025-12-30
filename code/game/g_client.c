@@ -4,6 +4,7 @@
 #include "g_local.h"
 
 #include "g_freeze.h"
+#include "q_shared.h"
 
 // g_client.c -- client functions that don't happen every frame
 
@@ -611,6 +612,9 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	char	c1[8];
 	char	c2[8];
 	char	userinfo[MAX_INFO_STRING];
+	char buffer[1024];
+
+	buffer[0] = '\0';
 
 	ent = g_entities + clientNum;
 	client = ent->client;
@@ -735,6 +739,16 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 
 	// Enable damage info
 	trap_SetConfigstring( CS_OSP_CUSTOM_CLIENT2, "1" );
+
+	// Support for OSP2-BE client
+	trap_SetConfigstring( CS_OSP2BE_SUPPORTED, "1" );
+	trap_SetConfigstring( CS_OSP2BE_DISABLED_FEATURES, va("%i", be_disabledFeatures.integer) );
+
+	// Allow hitboxes
+	Info_SetValueForKey( buffer, "x_hck_ps_enemy_hitbox", "1" );
+	trap_SetConfigstring( XQ3E_ALLOW_FEATURES, buffer );
+
+	Com_Printf("XQ3E config: %s\n", Info_ValueForKey(buffer, "x_hck_ps_enemy_hitbox"));
 
 	// Tell about our current physics
 	trap_SetConfigstring( CS_OSP_SERVER_MODE, PhyMovetypeToOspServerMode() );
