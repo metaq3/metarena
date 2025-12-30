@@ -3,6 +3,8 @@
 #include "bg_public.h"
 #include "g_local.h"
 
+#include "g_freeze.h"
+
 // g_client.c -- client functions that don't happen every frame
 
 const vec3_t	playerMins = {-15, -15, -24};
@@ -924,6 +926,10 @@ void ClientBegin( int clientNum ) {
 
 	// locate ent at a spawn point
 	ClientSpawn( ent );
+
+	if (g_frozenlatejoin.integer && client->pers.enterTime > level.startTime) {
+		player_freeze( ent, &g_entities[ENTITYNUM_WORLD], MOD_RAILGUN );
+	}
 
 	if ( !client->pers.inGame ) {
 		BroadcastTeamChange( client, -1 );

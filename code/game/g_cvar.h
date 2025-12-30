@@ -30,6 +30,8 @@ G_CVAR(g_dropWeapons, "g_dropWeapons", "0", CVAR_ARCHIVE, 0, qfalse, qfalse)
 // latched vars
 G_CVAR(g_gametype, "g_gametype", "0",
        CVAR_SERVERINFO | CVAR_USERINFO | CVAR_LATCH, 0, qfalse, qfalse)
+G_CVAR(g_frozenlatejoin, "g_frozenLateJoin", "0", CVAR_ARCHIVE, 0, qfalse,
+       qfalse)
 //::OSDF modded
 G_CVAR(phy_gravity, "phy_gravity", "800", 0, 0, qtrue, qfalse)
 G_CVAR(phy_speed, "phy_speed", "320", 0, 0, qtrue, qfalse)
