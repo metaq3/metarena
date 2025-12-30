@@ -2,6 +2,7 @@
 //
 // g_combat.c
 
+#include "bg_public.h"
 #include "g_local.h"
 #include "q_shared.h"
 
@@ -810,6 +811,37 @@ int G_InvulnerabilityEffect( gentity_t *targ, vec3_t dir, vec3_t point, vec3_t i
 	}
 }
 #endif
+
+
+void PersAccuracyHit( gentity_t* attacker, int mod ) {
+	static int modToWeapon[MOD_NUM_MAX];
+	int weapon = WP_NONE;
+
+	memset(modToWeapon, 0, sizeof(modToWeapon));
+
+	modToWeapon[MOD_GAUNTLET] 			= WP_GAUNTLET;
+	modToWeapon[MOD_MACHINEGUN] 		= WP_MACHINEGUN;
+	modToWeapon[MOD_SHOTGUN] 				= WP_SHOTGUN;
+	modToWeapon[MOD_GRENADE] 				= WP_GRENADE_LAUNCHER;
+	modToWeapon[MOD_GRENADE_SPLASH] = WP_GRENADE_LAUNCHER;
+	modToWeapon[MOD_ROCKET] 				= WP_ROCKET_LAUNCHER;
+	modToWeapon[MOD_ROCKET_SPLASH] 	= WP_ROCKET_LAUNCHER;
+	modToWeapon[MOD_LIGHTNING] 			= WP_LIGHTNING;
+	modToWeapon[MOD_RAILGUN] 				= WP_RAILGUN;
+	modToWeapon[MOD_PLASMA] 				= WP_PLASMAGUN;
+	modToWeapon[MOD_PLASMA_SPLASH] 	= WP_PLASMAGUN;
+	modToWeapon[MOD_BFG] 						= WP_BFG;
+	modToWeapon[MOD_BFG_SPLASH] 		= WP_BFG;
+
+	weapon = modToWeapon[mod];
+
+	if ( weapon == WP_NONE ) {
+		return;
+	}
+
+	attacker->client->pers.accuracies[weapon].hits++;
+}
+
 /*
 ============
 G_Damage
@@ -1063,6 +1095,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 			&& targ->s.eType != ET_MISSILE
 			&& targ->s.eType != ET_GENERAL) {
 #if 1
+		PersAccuracyHit( attacker, mod );
+
 		if ( OnSameTeam( targ, attacker ) ) {
 			attacker->client->ps.persistant[PERS_HITS] -= damage;
 		} else {

@@ -3,6 +3,7 @@
 // g_weapon.c 
 // perform the server side effects of a weapon firing
 
+#include "bg_public.h"
 #include "g_local.h"
 
 static	float	s_quadFactor;
@@ -860,6 +861,13 @@ void FireWeapon( gentity_t *ent ) {
 	AngleVectors( ent->client->ps.viewangles, forward, right, up );
 
 	CalcMuzzlePointOrigin( ent, muzzle_origin, forward, right, up, muzzle );
+
+	// [meta] >>>
+	// Gauntlet and grappling hook don't really "attack".
+	if (ent->s.weapon != WP_GAUNTLET && ent->s.weapon != WP_GRAPPLING_HOOK) {
+		ent->client->pers.accuracies[ent->s.weapon].attacks++;
+	}
+	// [meta] <<<
 
 	// fire the specific weapon
 	switch( ent->s.weapon ) {

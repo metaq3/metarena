@@ -222,6 +222,11 @@ typedef struct {
 #define MAX_NETNAME 64
 #define MAX_VOTE_COUNT 3
 
+typedef struct {
+  int attacks;
+  int hits;
+} accuracy_t;
+
 // client data that stays across multiple respawns, but is cleared
 // on each level change or team change at ClientBegin()
 typedef struct {
@@ -241,6 +246,8 @@ typedef struct {
   int teamVoted;
 
   qboolean inGame;
+
+  accuracy_t accuracies[WP_MAX_WEAPONS];
 } clientPersistant_t;
 
 // unlagged

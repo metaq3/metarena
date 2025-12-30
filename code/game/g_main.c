@@ -1,6 +1,7 @@
 // Copyright (C) 1999-2000 Id Software, Inc.
 //
 
+#include "bg_public.h"
 #include "g_local.h"
 #include "q_shared.h"
 
@@ -1320,7 +1321,7 @@ and the time everyone is moved to the intermission spot, so you
 can see the last frag.
 =================
 */
-static void CheckExitRules( void ) {
+qboolean CheckExit( void ) {
  	int			i;
 	gclient_t	*cl;
 
@@ -1328,7 +1329,7 @@ static void CheckExitRules( void ) {
 	// signal ready, then go to next level
 	if ( level.intermissiontime ) {
 		CheckIntermissionExit();
-		return;
+		return qfalse;
 	}
 
 	if ( level.intermissionQueued ) {
@@ -1344,7 +1345,7 @@ static void CheckExitRules( void ) {
 			BeginIntermission();
 		}
 #endif
-		return;
+		return qfalse;
 	}
 
 //freeze
@@ -1354,32 +1355,32 @@ static void CheckExitRules( void ) {
 	// check for sudden death
 	if ( ScoreIsTied() ) {
 		// always wait for sudden death
-		return;
+		return qfalse;
 	}
 
 	if ( g_timelimit.integer && !level.warmupTime ) {
 		if ( level.time - level.startTime >= g_timelimit.integer*60000 ) {
 			G_BroadcastServerCommand( -1, "print \"Timelimit hit.\n\"");
 			LogExit( "Timelimit hit." );
-			return;
+			return qtrue;
 		}
 	}
 
 	if ( level.numPlayingClients < 2 ) {
-		return;
+		return qfalse;
 	}
 
 	if ( g_gametype.integer < GT_CTF && g_fraglimit.integer ) {
 		if ( level.teamScores[TEAM_RED] >= g_fraglimit.integer ) {
 			G_BroadcastServerCommand( -1, "print \"Red hit the fraglimit.\n\"" );
 			LogExit( "Fraglimit hit." );
-			return;
+			return qtrue;
 		}
 
 		if ( level.teamScores[TEAM_BLUE] >= g_fraglimit.integer ) {
 			G_BroadcastServerCommand( -1, "print \"Blue hit the fraglimit.\n\"" );
 			LogExit( "Fraglimit hit." );
-			return;
+			return qtrue;
 		}
 
 		for ( i = 0 ; i < level.maxclients ; i++ ) {
@@ -1395,7 +1396,7 @@ static void CheckExitRules( void ) {
 				LogExit( "Fraglimit hit." );
 				G_BroadcastServerCommand( -1, va("print \"%s" S_COLOR_WHITE " hit the fraglimit.\n\"",
 					cl->pers.netname ) );
-				return;
+				return qtrue;
 			}
 		}
 	}
@@ -1405,16 +1406,185 @@ static void CheckExitRules( void ) {
 		if ( level.teamScores[TEAM_RED] >= g_capturelimit.integer ) {
 			G_BroadcastServerCommand( -1, "print \"Red hit the capturelimit.\n\"" );
 			LogExit( "Capturelimit hit." );
-			return;
+			return qtrue;
 		}
 
 		if ( level.teamScores[TEAM_BLUE] >= g_capturelimit.integer ) {
 			G_BroadcastServerCommand( -1, "print \"Blue hit the capturelimit.\n\"" );
 			LogExit( "Capturelimit hit." );
-			return;
+			return qtrue;
+		}
+	}
+
+	return qfalse;
+}
+
+// [meta] >>>
+
+qboolean IsStatisticallySignificant(int weapon, accuracy_t accuracy) {
+	static int minHits[WP_MAX_WEAPONS];
+
+	// Hide this weapons
+	minHits[WP_NONE] = -1;
+	minHits[WP_GAUNTLET] = -1;
+	minHits[WP_MACHINEGUN] = -1;
+
+	minHits[WP_SHOTGUN] = 20;
+	minHits[WP_GRENADE_LAUNCHER] = 5;
+	minHits[WP_ROCKET_LAUNCHER] = 10;
+	minHits[WP_LIGHTNING] = 25;
+	minHits[WP_RAILGUN] = 10;
+	minHits[WP_PLASMAGUN] = 50;
+	minHits[WP_BFG] = 20;
+
+	if ( weapon < WP_BFG && minHits[weapon] != -1 && accuracy.attacks >= minHits[weapon] ) {
+		return qtrue;
+	}
+
+	return qfalse;
+}
+
+void CalculateStats( gclient_t** bestWeaponStats ) {
+	int i;
+	int wp;
+	gclient_t *client;
+	float bestAccuracy;
+	float ourAccuracy;
+
+	for ( i = 0; i < WP_MAX_WEAPONS; ++i ) {
+		bestWeaponStats[i] = NULL;
+	}
+
+	// Calculate stats
+
+	for ( i = 0; i < MAX_CLIENTS; ++i ) {
+		client = g_entities[i].client;
+
+		if ( !client ) {
+			continue;
+		}
+
+		for (wp = 0; wp < WP_MAX_WEAPONS; ++wp) {
+			if ( !IsStatisticallySignificant(wp, client->pers.accuracies[wp]) ) {
+				continue;
+			}
+
+			if (bestWeaponStats[wp] == NULL) {
+				bestWeaponStats[wp] = client;
+				continue;
+			}
+
+			bestAccuracy = (float)bestWeaponStats[wp]->pers.accuracies[wp].hits /
+										 (float)bestWeaponStats[wp]->pers.accuracies[wp].attacks;
+			ourAccuracy = (float)client->pers.accuracies[wp].hits /
+										(float)client->pers.accuracies[wp].attacks;
+
+      if (ourAccuracy > bestAccuracy) {
+				bestWeaponStats[wp] = client;
+			}
 		}
 	}
 }
+
+const char* WeaponName( int weapon ) {
+	static const char* weaponNames[WP_MAX_WEAPONS];
+
+	weaponNames[WP_GAUNTLET] = "G ";
+	weaponNames[WP_MACHINEGUN] = "MG";
+	weaponNames[WP_SHOTGUN] = "SG";
+	weaponNames[WP_GRENADE_LAUNCHER] = "GL";
+	weaponNames[WP_ROCKET_LAUNCHER] = "RL";
+	weaponNames[WP_LIGHTNING] = "LG";
+	weaponNames[WP_RAILGUN] = "RG";
+	weaponNames[WP_PLASMAGUN] = "PG";
+	weaponNames[WP_BFG] = "BG";
+
+	return weaponNames[weapon];
+}
+
+void PrintPersonalStats( int clientNum ) {
+	gclient_t *client = &level.clients[clientNum];
+	float accuracy;
+	int wp;
+
+	trap_SendServerCommand( clientNum, "print \"^3 ---- Your match accuracies ---- ^7\n\"" );
+	trap_SendServerCommand( clientNum, "print \"\n\"" );
+
+	for ( wp = WP_MACHINEGUN; wp < WP_BFG; ++wp ) {
+		if ( client->pers.accuracies[wp].attacks == 0 ) {
+			continue;
+		}
+
+		accuracy = (float)client->pers.accuracies[wp].hits /
+							 (float)client->pers.accuracies[wp].attacks;
+
+		trap_SendServerCommand( clientNum,
+			va("print \"    ^6%s: ^5%.2f ( %i/%i )^7\n\"",
+			WeaponName(wp),
+			accuracy * 100.f,
+			client->pers.accuracies[wp].hits,
+			client->pers.accuracies[wp].attacks
+		));
+	}
+
+	trap_SendServerCommand( clientNum, "print \"\n\"" );
+}
+
+void PrintStats( void ) {
+	static gclient_t* bestWeaponStats[WP_MAX_WEAPONS];
+	int i;
+	int wp;
+	float accuracy;
+	char cleanName[1024];
+
+	CalculateStats( bestWeaponStats );
+
+	// Broadcast best accuracies
+
+	G_BroadcastServerCommand( -1, "print \"^3 ---- Best match accuracies ---- ^7\n\"" );
+	G_BroadcastServerCommand( -1, "print \"\n\"" );
+
+	for ( wp = WP_MACHINEGUN; wp < WP_BFG; ++wp ) {
+		if ( bestWeaponStats[wp] == NULL ) {
+			continue;
+		}
+
+		accuracy = (float)bestWeaponStats[wp]->pers.accuracies[wp].hits /
+							 (float)bestWeaponStats[wp]->pers.accuracies[wp].attacks;
+
+		BG_CleanName( bestWeaponStats[wp]->pers.netname, cleanName, sizeof(cleanName), "<unknown>" );
+
+		G_BroadcastServerCommand( -1,
+			va("print \"    ^6%s: ^5%.2f ( %i/%i )^7 - %s^7\n\"",
+			WeaponName(wp),
+			accuracy * 100.f,
+			bestWeaponStats[wp]->pers.accuracies[wp].hits,
+			bestWeaponStats[wp]->pers.accuracies[wp].attacks,
+			cleanName
+		));
+	}
+
+	G_BroadcastServerCommand( -1, "print \"\n\"" );
+	G_BroadcastServerCommand( -1, "print \"^3 ------------------------------- ^7\n\"" );
+
+	for ( i = 0; i < MAX_CLIENTS; ++i ) {
+		if (!g_entities[i].inuse || !g_entities[i].client) {
+			continue;
+		}
+
+		PrintPersonalStats(i);
+	}
+}
+
+static void CheckExitRules( void ) {
+ 	if ( !CheckExit() ) {
+		return;
+	}
+
+	PrintStats();
+}
+
+// [meta] <<<
 
 
 static void ClearBodyQue( void ) {

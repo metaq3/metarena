@@ -748,8 +748,6 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	Info_SetValueForKey( buffer, "x_hck_ps_enemy_hitbox", "1" );
 	trap_SetConfigstring( XQ3E_ALLOW_FEATURES, buffer );
 
-	Com_Printf("XQ3E config: %s\n", Info_ValueForKey(buffer, "x_hck_ps_enemy_hitbox"));
-
 	// Tell about our current physics
 	trap_SetConfigstring( CS_OSP_SERVER_MODE, PhyMovetypeToOspServerMode() );
 
@@ -787,6 +785,7 @@ const char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 	char		userinfo[MAX_INFO_STRING];
 	gentity_t	*ent;
 	qboolean	isAdmin;
+	int i;
 
 	if ( clientNum >= level.maxclients ) {
 		return "Bad connection slot.";
@@ -900,6 +899,13 @@ const char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 	} else {
 		client->pers.inGame = qtrue; // FIXME: read from session data?
 	}
+
+	// [meta] >>>
+	for (i = 0; i < WP_MAX_WEAPONS; ++i) {
+		client->pers.accuracies[i].attacks = 0;
+		client->pers.accuracies[i].hits = 0;
+	}
+	// [meta] <<<
 
 	// count current clients and rank for scoreboard
 	CalculateRanks();
