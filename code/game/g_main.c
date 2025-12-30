@@ -2,6 +2,7 @@
 //
 
 #include "g_local.h"
+#include "q_shared.h"
 
 level_locals_t	level;
 

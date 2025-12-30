@@ -2,6 +2,7 @@
 //
 
 #include "g_local.h"
+#include "q_shared.h"
 
 
 /*
@@ -1234,7 +1235,7 @@ void ClientEndFrame( gentity_t *ent ) {
 		// avoid high-byte setup
 		if ( i > 255 )
 			i = 255;
-		client->ps.persistant[PERS_ATTACKEE_ARMOR] = i;
+		// client->ps.persistant[PERS_ATTACKEE_ARMOR] = i; // [meta]: simulate osp
 		client->damage.amount = 0;
 	} else if ( client->damage.team ) {
 		client->ps.persistant[PERS_HITS] -= client->damage.team;

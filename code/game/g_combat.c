@@ -1062,13 +1062,15 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	if ( attacker->client && client && targ != attacker && targ->health > 0
 			&& targ->s.eType != ET_MISSILE
 			&& targ->s.eType != ET_GENERAL) {
-#ifdef MISSIONPACK
+#if 1
 		if ( OnSameTeam( targ, attacker ) ) {
-			attacker->client->ps.persistant[PERS_HITS]--;
+			attacker->client->ps.persistant[PERS_HITS] -= damage;
 		} else {
-			attacker->client->ps.persistant[PERS_HITS]++;
+			attacker->client->ps.persistant[PERS_HITS] += damage;
 		}
-		attacker->client->ps.persistant[PERS_ATTACKEE_ARMOR] = (targ->health<<8)|(client->ps.stats[STAT_ARMOR]);
+
+		// [meta]: simulate osp
+		attacker->client->ps.persistant[PERS_ATTACKEE_ARMOR] = 0; // (targ->health<<8)|(client->ps.stats[STAT_ARMOR]);
 #else
 		// we may hit multiple targets from different teams
 		// so usual PERS_HITS increments/decrements could result in ZERO delta

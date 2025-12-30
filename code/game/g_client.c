@@ -570,6 +570,22 @@ team_t PickTeam( int ignoreClientNum ) {
 	return TEAM_BLUE;
 }
 
+char* PhyMovetypeToOspServerMode() {
+	char* movetypes[] = {
+		"1",
+		"1",
+		"0",
+		"0",
+		"0",
+		"2"
+	};
+
+	if (phy_movetype.integer < 0 || phy_movetype.integer > 5) {
+		return "0";
+	}
+
+	return movetypes[phy_movetype.integer];
+}
 
 /*
 ===========
@@ -716,6 +732,12 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	}
 
 	trap_SetConfigstring( CS_PLAYERS+clientNum, s );
+
+	// Enable damage info
+	trap_SetConfigstring( CS_OSP_CUSTOM_CLIENT2, "1" );
+
+	// Tell about our current physics
+	trap_SetConfigstring( CS_OSP_SERVER_MODE, PhyMovetypeToOspServerMode() );
 
 	// this is not the userinfo, more like the configstring actually
 	G_LogPrintf( "ClientUserinfoChanged: %i %s\n", clientNum, s );
