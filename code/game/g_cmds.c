@@ -901,6 +901,12 @@ void Cmd_FollowCycle_f( gentity_t *ent, int dir ) {
 			continue;
 		}
 
+		// Can't follow enemy team
+		if ( g_gametype.integer >= GT_TEAM &&
+			   level.clients[ clientnum ].sess.sessionTeam != ent->client->sess.sessionTeam ) {
+			continue;
+		}
+
 		// this is good, we can use it
 		ent->client->sess.spectatorClient = clientnum;
 		ent->client->sess.spectatorState = SPECTATOR_FOLLOW;
