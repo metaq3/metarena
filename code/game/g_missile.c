@@ -2,6 +2,7 @@
 //
 #include "g_local.h"
 #include "local.h"
+#include "q_shared.h"
 
 #define	MISSILE_PRESTEP_TIME	50
 
@@ -65,7 +66,7 @@ void G_ExplodeMissile( gentity_t *ent ) {
 	// splash damage
 	if ( ent->splashDamage ) {
 		if( G_RadiusDamage( ent->r.currentOrigin, ent->parent, ent->splashDamage, ent->splashRadius, ent
-			, ent->splashMethodOfDeath ) ) {
+			, ent->splashMethodOfDeath, ent ) ) {
 			g_entities[ent->r.ownerNum].client->accuracy_hits++;
 		}
 	}
@@ -414,7 +415,7 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 	// splash damage (doesn't apply to person directly hit)
 	if ( ent->splashDamage ) {
 		if( G_RadiusDamage( trace->endpos, ent->parent, ent->splashDamage, ent->splashRadius, 
-			other, ent->splashMethodOfDeath ) ) {
+			other, ent->splashMethodOfDeath, ent ) ) {
 			if( !hitClient ) {
 				g_entities[ent->r.ownerNum].client->accuracy_hits++;
 			}
@@ -558,7 +559,7 @@ gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t dir) {
 
 	bolt = G_Spawn();
 	bolt->classname = "grenade";
-	bolt->nextthink = level.time + 2600;
+	bolt->nextthink = level.time + 2550;
 	bolt->think = G_ExplodeMissile;
 	bolt->s.eType = ET_MISSILE;
 	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
@@ -607,19 +608,35 @@ gentity_t *fire_bfg (gentity_t *self, vec3_t start, vec3_t dir) {
 	VectorNormalize (dir);
 
 	bolt = G_Spawn();
-	bolt->classname = "bfg";
-	bolt->nextthink = level.time + 10000;
+	// bolt->classname = "bfg";
+	// bolt->nextthink = level.time + 10000;
+	// bolt->think = G_ExplodeMissile;
+	// bolt->s.eType = ET_MISSILE;
+	// bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
+	// bolt->s.weapon = WP_BFG;
+	// bolt->r.ownerNum = self->s.number;
+	// bolt->parent = self;
+	// bolt->damage = 100;
+	// bolt->splashDamage = 100;
+	// bolt->splashRadius = 120;
+	// bolt->methodOfDeath = MOD_BFG;
+	// bolt->splashMethodOfDeath = MOD_BFG_SPLASH;
+	// bolt->clipmask = MASK_SHOT;
+	// bolt->target_ent = NULL;
+	bolt->classname = "grenade";
+	bolt->nextthink = level.time + 6000;
 	bolt->think = G_ExplodeMissile;
 	bolt->s.eType = ET_MISSILE;
 	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
-	bolt->s.weapon = WP_BFG;
+	bolt->s.weapon = WP_GRENADE_LAUNCHER;
+	bolt->s.eFlags = EF_BOUNCE_HALF | EF_KNOCKBACK;
 	bolt->r.ownerNum = self->s.number;
 	bolt->parent = self;
-	bolt->damage = 100;
-	bolt->splashDamage = 100;
-	bolt->splashRadius = 120;
-	bolt->methodOfDeath = MOD_BFG;
-	bolt->splashMethodOfDeath = MOD_BFG_SPLASH;
+	bolt->damage = 40;
+	bolt->splashDamage = 300;
+	bolt->splashRadius = 400;
+	bolt->methodOfDeath = MOD_GRENADE;
+	bolt->splashMethodOfDeath = MOD_GRENADE_SPLASH;
 	bolt->clipmask = MASK_SHOT;
 	bolt->target_ent = NULL;
 
@@ -631,7 +648,7 @@ gentity_t *fire_bfg (gentity_t *self, vec3_t start, vec3_t dir) {
 	// unlagged
 	bolt->s.otherEntityNum = self->s.number;
 
-	bolt->s.pos.trType = TR_LINEAR;
+	bolt->s.pos.trType = TR_GRAVITY;
 	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
 	VectorCopy( start, bolt->s.pos.trBase );
 	SnapVector( bolt->s.pos.trBase );			// save net bandwidth

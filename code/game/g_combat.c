@@ -34,7 +34,7 @@ Adds score to both the client and his team
 void AddScore( gentity_t *ent, vec3_t origin, int score ) {
 	int i;
 	gentity_t *target;
-	qboolean team_is_dead;
+
 	if ( !ent->client ) {
 		return;
 	}
@@ -46,22 +46,7 @@ void AddScore( gentity_t *ent, vec3_t origin, int score ) {
 	ScorePlum(ent, origin, score);
 	//
 	ent->client->ps.persistant[PERS_SCORE] += score;
-	if ( g_gametype.integer == GT_TEAM ) {
-		team_is_dead = qtrue;
 
-		for (i = 0; i < MAX_GENTITIES; ++i) {
-			target = &g_entities[i];
-
-			if (target->client && !is_body_freeze(target) && !OnSameTeam(target, ent)) {
-				team_is_dead = qfalse;
-				break;
-			}
-		}
-
-		if (team_is_dead) {
-			team_wins( ent->client->sess.sessionTeam );
-		}
-	}
 	CalculateRanks();
 }
 
@@ -1078,6 +1063,11 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	if ( damage < 1 ) {
 		damage = 1;
 	}
+
+	if ( inflictor && (inflictor->s.eFlags & EF_KNOCKBACK) ) {
+		damage = 0;
+	}
+
 	take = damage;
 
 	// save some from armor
@@ -1275,7 +1265,7 @@ G_RadiusDamage
 ============
 */
 qboolean G_RadiusDamage ( vec3_t origin, gentity_t *attacker, float damage, float radius,
-					 gentity_t *ignore, int mod) {
+					 gentity_t *ignore, int mod, gentity_t *inflictor ) {
 	float		points, dist;
 	gentity_t	*ent;
 	int			entityList[MAX_GENTITIES];
@@ -1331,7 +1321,7 @@ qboolean G_RadiusDamage ( vec3_t origin, gentity_t *attacker, float damage, floa
 			// push the center of mass higher than the origin so players
 			// get knocked into the air more
 			dir[2] += 24;
-			G_Damage (ent, NULL, attacker, dir, origin, (int)points, DAMAGE_RADIUS, mod);
+			G_Damage (ent, inflictor, attacker, dir, origin, (int)points, DAMAGE_RADIUS, mod);
 		}
 	}
 

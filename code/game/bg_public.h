@@ -307,6 +307,7 @@ typedef enum {
 #define EF_AWARD_ASSIST 0x00020000     // draw a assist sprite
 #define EF_AWARD_DENIED 0x00040000     // denied
 #define EF_TEAMVOTED 0x00080000        // already cast a team vote
+#define EF_KNOCKBACK 0x00100000        // only knockback
 
 #define EF_PERSISTANT (EF_CONNECTION | EF_VOTED | EF_TEAMVOTED)
 #define EF_AWARDS                                                              \
@@ -635,7 +636,7 @@ void BG_PlayerStateToEntityStateExtraPolate(playerState_t *ps, entityState_t *s,
                                             int time, qboolean snap);
 
 qboolean BG_PlayerTouchesItem(playerState_t *ps, entityState_t *item,
-                              int atTime);
+                              int atTime, int movetype);
 
 #define ARENAS_PER_TIER 4
 #define MAX_ARENAS 1024

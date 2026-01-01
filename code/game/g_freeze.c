@@ -315,7 +315,7 @@ static void Body_think( gentity_t *self ) {
 	if ( level.intermissiontime || level.intermissionQueued ) {
 		return;
 	}
-	if ( level.time - self->timestamp > 150000 || ( ( g_dmflags.integer & 1024 || g_gametype.integer == GT_CTF ) && level.time - self->timestamp > 60000 ) ) {
+	if ( level.time - self->timestamp > g_unfreezeTime.integer * 1000 || ( ( g_gametype.integer == GT_CTF ) && level.time - self->timestamp > 60000 ) ) {
 		player_free( self->target_ent );
 		TossBody( self );
 		return;

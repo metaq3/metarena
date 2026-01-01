@@ -776,8 +776,6 @@ static void Cmd_Team_f( gentity_t *ent ) {
 		if ( ent->client->sess.spectatorState == SPECTATOR_FOLLOW ) {
 			StopFollowing( ent, qtrue );
 		}
-		ent->client->ps.persistant[ PERS_TEAM ] = ent->client->sess.sessionTeam;
-		return;
 	}
 //freeze
 

@@ -988,17 +988,24 @@ Items can be picked up without actually touching their physical bounds to make
 grabbing them easier
 ============
 */
-qboolean	BG_PlayerTouchesItem( playerState_t *ps, entityState_t *item, int atTime ) {
+qboolean	BG_PlayerTouchesItem( playerState_t *ps, entityState_t *item, int atTime, int movetype ) {
 	vec3_t		origin;
+	int			zMargin; // Used for above the item. See Explanation
 
 	BG_EvaluateTrajectory( &item->pos, atTime, origin );
 
+	// Player mins (-15, -15, -24), maxs (15, 15, 32)
+	//    Defined at the top of g_client.c
+	//  zMargin : Margin above the item. We need to be under this range to pick it
+	//          : Default 36u = If we are 32u above the item, we won't pick it
+	//          : CPM     66u = If we are 62u above the item, we won't pick it
+	zMargin = (movetype == 0) ? 66 : 36;
 	// we are ignoring ducked differences here
 	if ( ps->origin[0] - origin[0] > 44
 		|| ps->origin[0] - origin[0] < -50
 		|| ps->origin[1] - origin[1] > 36
 		|| ps->origin[1] - origin[1] < -36
-		|| ps->origin[2] - origin[2] > 36
+		|| ps->origin[2] - origin[2] > zMargin
 		|| ps->origin[2] - origin[2] < -36 ) {
 		return qfalse;
 	}

@@ -9,6 +9,7 @@ Based on:
 - baseq3a from Cyrax: https://github.com/ec-/baseq3a
 - Unlagged mod by Nail Toronto ( included in baseq3a )
 - Open Source Defrag: https://github.com/OpenQuake3/defrag
+- Freeze Tag: https://github.com/dbircsak/freeze-tag
 
 Also huge thanks to OSP2 contributors, especially snems. You can check out their work: https://github.com/snems/OSP2
 
@@ -50,6 +51,9 @@ set phy_rocket_splashRadius 120
 
 // Players joining match mid-game will spawn frozen
 set g_frozenLateJoin 1
+
+// Frozen players will automatically unfreeze after 4 minutes
+set g_unfreezeTime 240
 
 // Disable features for OSP2-BE. Current list:
 //    1 - Team wallhack

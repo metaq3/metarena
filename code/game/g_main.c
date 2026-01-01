@@ -1053,7 +1053,6 @@ void ExitLevel( void ) {
 	}
 
 	level.intermissiontime = 0;
-
 	// reset all the scores so we don't enter the intermission again
 	level.teamScores[TEAM_RED] = 0;
 	level.teamScores[TEAM_BLUE] = 0;
@@ -1141,6 +1140,10 @@ void LogExit( const char *string ) {
 	qboolean won = qtrue;
 #endif
 	G_LogPrintf( "Exit: %s\n", string );
+
+	if ( level.intermissionQueued ) {
+		return;
+	}
 
 	level.intermissionQueued = level.time;
 
@@ -1335,16 +1338,16 @@ qboolean CheckExit( void ) {
 	if ( level.intermissionQueued ) {
 #ifdef MISSIONPACK
 		int time = (g_singlePlayer.integer) ? SP_INTERMISSION_DELAY_TIME : INTERMISSION_DELAY_TIME;
-		if ( level.time - level.intermissionQueued >= time ) {
-			level.intermissionQueued = 0;
-			BeginIntermission();
-		}
+		if ( level.time - level.intermissionQueued < time )
+			return qfalse;
 #else
-		if ( level.time - level.intermissionQueued >= INTERMISSION_DELAY_TIME ) {
-			level.intermissionQueued = 0;
-			BeginIntermission();
-		}
+		if ( level.time - level.intermissionQueued < INTERMISSION_DELAY_TIME )
+			return qfalse;
 #endif
+
+		level.intermissionQueued = 0;
+		BeginIntermission();
+
 		return qfalse;
 	}
 
@@ -1401,8 +1404,7 @@ qboolean CheckExit( void ) {
 		}
 	}
 
-	if ( g_gametype.integer >= GT_TEAM && g_capturelimit.integer ) {
-
+	if ( g_gametype.integer > GT_TEAM && g_capturelimit.integer ) {
 		if ( level.teamScores[TEAM_RED] >= g_capturelimit.integer ) {
 			G_BroadcastServerCommand( -1, "print \"Red hit the capturelimit.\n\"" );
 			LogExit( "Capturelimit hit." );
@@ -1577,11 +1579,16 @@ void PrintStats( void ) {
 }
 
 static void CheckExitRules( void ) {
+	static int oldIntermissionQueue = 0;
+
  	if ( !CheckExit() ) {
 		return;
 	}
 
-	PrintStats();
+	if ( oldIntermissionQueue != level.intermissionQueued ) {
+		oldIntermissionQueue = level.intermissionQueued;
+		PrintStats();
+	}
 }
 
 // [meta] <<<
