@@ -98,6 +98,37 @@ void Cmd_StatsInfo_f( gentity_t *ent ) {
 	G_OSPShowStatsInfo( ent-g_entities, g_weaponMask.integer );
 }
 
+void Cmd_PlayerStats_f( gentity_t *ent ) {
+	int target = ent-g_entities;
+	char	arg[MAX_STRING_CHARS];
+
+	if ( trap_Argc() != 2 ) {
+		trap_SendServerCommand( ent-g_entities, "print \"^3Usage: \\player ^2<player-id>^7\n\"" );
+		return;
+	}
+
+	trap_Argv( 1, arg, sizeof(arg) );
+
+	if ( strlen(arg) == 0 ) {
+		trap_SendServerCommand( ent-g_entities, "print \"^3Invalid argument.\n\"" );
+		return;
+	}
+
+	target = atoi(arg);
+
+	if ( target < 0 || target > g_maxclients.integer ) {
+		trap_SendServerCommand( ent-g_entities, "print \"^3Provided value is out of range.\n\"" );
+		return;
+	}
+
+	if ( !g_entities[target].inuse || !g_entities[target].inuse ) {
+		trap_SendServerCommand( ent-g_entities, "print \"^3Client slot is empty.\n\"" );
+		return;
+	}
+
+	G_OSPSendXStatsInfo( target, ent-g_entities, g_weaponMask.integer );
+}
+
 
 /*
 ==================
@@ -1904,6 +1935,10 @@ void ClientCommand( int clientNum ) {
 	}
 	if (Q_stricmp (cmd, "getstatsinfo") == 0) {
 		Cmd_StatsInfo_f (ent);
+		return;
+	}
+	if (Q_stricmp (cmd, "stats") == 0) {
+		Cmd_PlayerStats_f (ent);
 		return;
 	}
 

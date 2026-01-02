@@ -865,7 +865,11 @@ void FireWeapon( gentity_t *ent ) {
 	// [meta] >>>
 	// Gauntlet and grappling hook don't really "attack".
 	if (ent->s.weapon != WP_GAUNTLET && ent->s.weapon != WP_GRAPPLING_HOOK) {
-		ent->client->pers.accuracies[ent->s.weapon].attacks++;
+		if ( ent->s.weapon == WP_SHOTGUN ) {
+			ent->client->pers.accuracies[ent->s.weapon].attacks += 10;
+		} else {
+			ent->client->pers.accuracies[ent->s.weapon].attacks++;
+		}
 	}
 	// [meta] <<<
 

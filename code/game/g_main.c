@@ -1506,33 +1506,7 @@ const char* WeaponName( int weapon ) {
 }
 
 void PrintPersonalStats( int clientNum ) {
-#if 0
-	gclient_t *client = &level.clients[clientNum];
-	float accuracy;
-	int wp;
-
-	trap_SendServerCommand( clientNum, "print \"^3 ---- Your match accuracies ---- ^7\n\"" );
-	trap_SendServerCommand( clientNum, "print \"\n\"" );
-
-	for ( wp = WP_MACHINEGUN; wp < WP_BFG; ++wp ) {
-		if ( client->pers.accuracies[wp].attacks == 0 ) {
-			continue;
-		}
-
-		accuracy = (float)client->pers.accuracies[wp].hits /
-							 (float)client->pers.accuracies[wp].attacks;
-
-		trap_SendServerCommand( clientNum,
-			va("print \"    ^6%s: ^5%.2f ( %i/%i )^7\n\"",
-			WeaponName(wp),
-			accuracy * 100.f,
-			client->pers.accuracies[wp].hits,
-			client->pers.accuracies[wp].attacks
-		));
-	}
-
-	trap_SendServerCommand( clientNum, "print \"\n\"" );
-#endif
+	G_OSPSendXStatsInfo( clientNum, clientNum, g_weaponMask.integer );
 }
 
 void PrintStats( void ) {

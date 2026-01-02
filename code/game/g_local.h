@@ -499,6 +499,7 @@ char *G_NewString(const char *string);
 //
 void Cmd_Score_f(gentity_t *ent);
 void Cmd_StatsInfo_f(gentity_t *ent);
+void Cmd_PlayerStats_f(gentity_t *ent);
 void StopFollowing(gentity_t *ent, qboolean release);
 void BroadcastTeamChange(gclient_t *client, team_t oldTeam);
 qboolean SetTeam(gentity_t *ent, const char *s);
