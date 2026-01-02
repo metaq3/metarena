@@ -302,6 +302,7 @@ static int Pickup_Weapon( gentity_t *ent, gentity_t *other ) {
 
 	// add the weapon
 	other->client->ps.stats[STAT_WEAPONS] |= ( 1 << ent->item->giTag );
+	other->client->pers.accuracies[ent->item->giTag].pickups++;
 
 	Add_Ammo( other, ent->item->giTag, quantity );
 
@@ -335,6 +336,10 @@ static int Pickup_Health( gentity_t *ent, gentity_t *other ) {
 		max = other->client->ps.stats[STAT_MAX_HEALTH];
 	} else {
 		max = other->client->ps.stats[STAT_MAX_HEALTH] * 2;
+
+		if ( ent->item->quantity == 100 ) {
+			other->client->pers.stats[OSP_STATS_MH]++;
+		}
 	}
 
 	if ( ent->count ) {
@@ -379,6 +384,22 @@ int Pickup_Armor( gentity_t *ent, gentity_t *other ) {
 	}
 #else
 	other->client->ps.stats[STAT_ARMOR] += ent->item->quantity;
+
+	switch ( ent->item->quantity ) {
+		case 5: {
+			other->client->pers.stats[OSP_STATS_GA]++;
+			break;
+		}
+		case 50: {
+			other->client->pers.stats[OSP_STATS_YA]++;
+			break;
+		}
+		case 100: {
+			other->client->pers.stats[OSP_STATS_RA]++;
+			break;
+		}
+	}
+
 	if ( other->client->ps.stats[STAT_ARMOR] > other->client->ps.stats[STAT_MAX_HEALTH] * 2 ) {
 		other->client->ps.stats[STAT_ARMOR] = other->client->ps.stats[STAT_MAX_HEALTH] * 2;
 	}
@@ -969,7 +990,10 @@ void G_SpawnItem( gentity_t *ent, gitem_t *item ) {
 
 	RegisterItem( item );
 
-	if ( G_ItemDisabled( item ) || item->giType == IT_WEAPON || item->giType == IT_AMMO || ( item->giType == IT_POWERUP && !g_spawnPowerups.integer ) ) {
+	if ( G_ItemDisabled( item ) ||
+			!(g_spawnItems.integer & (1 << item->giType)) ||
+			( item->giType == IT_POWERUP && !(g_spawnPowerups.integer & (1 << item->giTag)) )
+	) {
 		ent->tag = TAG_DONTSPAWN;
 		return;
 	}

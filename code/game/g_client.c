@@ -737,6 +737,18 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 
 	trap_SetConfigstring( CS_PLAYERS+clientNum, s );
 
+	// Disable max_fps cap
+	trap_SetConfigstring( CS_OSP_CUSTOM_CLIENT, "44" );
+
+	trap_SetConfigstring( CS_OSP_MAXPACKETS_MIN, va("%i", g_maxPacketsLowerBound.integer) );
+	trap_SetConfigstring( CS_OSP_MAXPACKETS_MAX, va("%i", g_maxPacketsUpperBound.integer) );
+	trap_SetConfigstring( CS_OSP_TIMENUDGE_MIN, va("%i", g_timeNudgeLowerBound.integer) );
+	trap_SetConfigstring( CS_OSP_TIMENUDGE_MAX, va("%i", g_timeNudgeUpperBound.integer) );
+	trap_SetConfigstring( CS_OSP_VERSION_STR, "MA:0.0.9~git.4" );
+	trap_SetConfigstring( CS_OSP_FREEZE_GAME_TYPE, g_gametype.integer == GT_TEAM ? "1" : "0" );
+	trap_SetConfigstring( CS_OSP_ALLOW_PMOVE, g_allowPmove.integer ? "1" : "0" );
+	trap_SetConfigstring( CS_OSP_CLAN_BASE_TEAM_DM, "0" );
+
 	// Enable damage info
 	trap_SetConfigstring( CS_OSP_CUSTOM_CLIENT2, "1" );
 
@@ -902,8 +914,12 @@ const char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 
 	// [meta] >>>
 	for (i = 0; i < WP_MAX_WEAPONS; ++i) {
+		client->pers.accuracies[i].deaths = 0;
+		client->pers.accuracies[i].kills = 0;
 		client->pers.accuracies[i].attacks = 0;
 		client->pers.accuracies[i].hits = 0;
+		client->pers.accuracies[i].pickups = 0;
+		client->pers.accuracies[i].drops = 0;
 	}
 	// [meta] <<<
 

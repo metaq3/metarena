@@ -32,6 +32,12 @@
 extern pmove_t *pm;
 extern pml_t pml;
 
+#ifdef Q3_VM
+#define LIB_ONLY_STATIC
+#else
+#define LIB_ONLY_STATIC static
+#endif
+
 // default movement parameters
 extern float pm_spectatorfriction;
 
@@ -42,48 +48,49 @@ void trap_SnapVector(float *v);
 void PM_AddEvent(int newEvent);
 void PM_AddTouchEnt(int entityNum);
 // TODO: Move back to Static
-void PM_StartTorsoAnim(int anim);
-void PM_StartLegsAnim(int anim);
-void PM_ContinueLegsAnim(int anim);
-void PM_ContinueTorsoAnim(int anim);
-void PM_ForceLegsAnim(int anim);
+LIB_ONLY_STATIC void PM_StartTorsoAnim(int anim);
+LIB_ONLY_STATIC void PM_StartLegsAnim(int anim);
+LIB_ONLY_STATIC void PM_ContinueLegsAnim(int anim);
+LIB_ONLY_STATIC void PM_ContinueTorsoAnim(int anim);
+LIB_ONLY_STATIC void PM_ForceLegsAnim(int anim);
 void PM_ClipVelocity(vec3_t in, vec3_t normal, vec3_t out, float overbounce);
-void PM_Friction(void);
-void PM_Accelerate(vec3_t wishdir, float wishspeed, float accel);
-float PM_CmdScale(usercmd_t *cmd);
-void PM_SetMovementDir(void);
-qboolean PM_CheckJump(void);
-qboolean PM_CheckWaterJump(void);
-void PM_WaterJumpMove(void);
-void PM_WaterMove(void);
+LIB_ONLY_STATIC void PM_Friction(void);
+LIB_ONLY_STATIC void PM_Accelerate(vec3_t wishdir, float wishspeed,
+                                   float accel);
+LIB_ONLY_STATIC float PM_CmdScale(usercmd_t *cmd);
+LIB_ONLY_STATIC void PM_SetMovementDir(void);
+LIB_ONLY_STATIC qboolean PM_CheckJump(void);
+LIB_ONLY_STATIC qboolean PM_CheckWaterJump(void);
+LIB_ONLY_STATIC void PM_WaterJumpMove(void);
+LIB_ONLY_STATIC void PM_WaterMove(void);
 
 #ifdef TEAMARENA
 void PM_InvulnerabilityMove(void);
 #endif
-void PM_AirMove(void);
-void PM_GrappleMove(playerState_t *ps);
-void PM_WalkMove(void);
-int PM_FootstepForSurface(void);
-void PM_CrashLand(void);
+LIB_ONLY_STATIC void PM_AirMove(void);
+LIB_ONLY_STATIC void PM_GrappleMove(playerState_t *ps);
+LIB_ONLY_STATIC void PM_WalkMove(void);
+LIB_ONLY_STATIC int PM_FootstepForSurface(void);
+LIB_ONLY_STATIC void PM_CrashLand(void);
 /*
 void PM_CheckStuck(void);
 */
-int PM_CorrectAllSolid(trace_t *trace);
-void PM_GroundTraceMissed(void);
-void PM_Footsteps(void);
-void PM_WaterEvents(void);
+LIB_ONLY_STATIC int PM_CorrectAllSolid(trace_t *trace);
+LIB_ONLY_STATIC void PM_GroundTraceMissed(void);
+LIB_ONLY_STATIC void PM_Footsteps(void);
+LIB_ONLY_STATIC void PM_WaterEvents(void);
 
-void PM_TorsoAnimation(void);
-void PM_Weapon(void);
-void PM_Animate(void);
+LIB_ONLY_STATIC void PM_TorsoAnimation(void);
+LIB_ONLY_STATIC void PM_Weapon(void);
+LIB_ONLY_STATIC void PM_Animate(void);
 
 void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd);
-void PM_CheckDuck(void);
-void PM_FlyMove(void);
-void PM_DropTimers(void);
-void PM_NoclipMove(void);
-void PM_SetWaterLevel(void);
-void PM_GroundTrace(void);
-void PM_DeadMove(void);
+LIB_ONLY_STATIC void PM_CheckDuck(void);
+LIB_ONLY_STATIC void PM_FlyMove(void);
+LIB_ONLY_STATIC void PM_DropTimers(void);
+LIB_ONLY_STATIC void PM_NoclipMove(void);
+LIB_ONLY_STATIC void PM_SetWaterLevel(void);
+LIB_ONLY_STATIC void PM_GroundTrace(void);
+LIB_ONLY_STATIC void PM_DeadMove(void);
 
 #endif // BG_PMOVE_H

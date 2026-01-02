@@ -3,6 +3,7 @@
 
 #include "bg_public.h"
 #include "g_local.h"
+#include "g_osp.h"
 #include "q_shared.h"
 
 level_locals_t	level;
@@ -1505,6 +1506,7 @@ const char* WeaponName( int weapon ) {
 }
 
 void PrintPersonalStats( int clientNum ) {
+#if 0
 	gclient_t *client = &level.clients[clientNum];
 	float accuracy;
 	int wp;
@@ -1530,6 +1532,7 @@ void PrintPersonalStats( int clientNum ) {
 	}
 
 	trap_SendServerCommand( clientNum, "print \"\n\"" );
+#endif
 }
 
 void PrintStats( void ) {

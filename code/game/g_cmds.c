@@ -2,6 +2,7 @@
 //
 #include "bg_public.h"
 #include "g_local.h"
+#include "g_osp.h"
 
 #ifdef MISSIONPACK
 #include "../../ui/menudef.h"			// for the voice chats
@@ -91,6 +92,10 @@ Request current scoreboard information
 */
 void Cmd_Score_f( gentity_t *ent ) {
 	DeathmatchScoreboardMessage( ent );
+}
+
+void Cmd_StatsInfo_f( gentity_t *ent ) {
+	G_OSPShowStatsInfo( ent-g_entities, g_weaponMask.integer );
 }
 
 
@@ -1895,6 +1900,10 @@ void ClientCommand( int clientNum ) {
 #endif
 	if (Q_stricmp (cmd, "score") == 0) {
 		Cmd_Score_f (ent);
+		return;
+	}
+	if (Q_stricmp (cmd, "getstatsinfo") == 0) {
+		Cmd_StatsInfo_f (ent);
 		return;
 	}
 

@@ -33,6 +33,16 @@ G_CVAR(g_gametype, "g_gametype", "0",
 G_CVAR(g_unfreezeTime, "g_unfreezeTime", "240", CVAR_ARCHIVE, 0, qfalse, qfalse)
 G_CVAR(g_frozenlatejoin, "g_frozenLateJoin", "0", CVAR_ARCHIVE, 0, qfalse,
        qfalse)
+G_CVAR(g_maxPacketsLowerBound, "g_maxPacketsLowerBound", "125", CVAR_ARCHIVE, 0,
+       qfalse, qfalse)
+G_CVAR(g_maxPacketsUpperBound, "g_maxPacketsUpperBound", "125", CVAR_ARCHIVE, 0,
+       qfalse, qfalse)
+G_CVAR(g_timeNudgeLowerBound, "g_timeNudgeLowerBound", "-12", CVAR_ARCHIVE, 0,
+       qfalse, qfalse)
+G_CVAR(g_timeNudgeUpperBound, "g_timeNudgeUpperBound", "20", CVAR_ARCHIVE, 0,
+       qfalse, qfalse)
+G_CVAR(g_allowPmove, "g_allowPmove", "0", CVAR_ARCHIVE, 0, qfalse, qfalse)
+G_CVAR(g_weaponMask, "g_weaponMask", "511", CVAR_ARCHIVE, 0, qfalse, qfalse)
 G_CVAR(be_disabledFeatures, "be_disabledFeatures", "0", CVAR_ARCHIVE, 0, qfalse,
        qfalse)
 //::OSDF modded
@@ -129,7 +139,9 @@ G_CVAR(g_listEntity, "g_listEntity", "0", 0, 0, qfalse, qfalse)
 G_CVAR(g_unlagged, "g_unlagged", "1", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qfalse,
        qfalse)
 G_CVAR(g_predictPVS, "g_predictPVS", "0", CVAR_ARCHIVE, 0, qfalse, qfalse)
-G_CVAR(g_spawnPowerups, "g_spawnPowerups", "0", CVAR_ARCHIVE, 0, qfalse, qfalse)
+G_CVAR(g_spawnItems, "g_spawnItems", "472", CVAR_ARCHIVE, 0, qfalse, qfalse)
+G_CVAR(g_spawnPowerups, "g_spawnPowerups", "508", CVAR_ARCHIVE, 0, qfalse,
+       qfalse)
 
 #ifdef MISSIONPACK
 G_CVAR(g_obeliskHealth, "g_obeliskHealth", "2500", 0, 0, qfalse, qfalse)

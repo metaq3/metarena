@@ -204,6 +204,32 @@ typedef struct {
 #define FOLLOW_ACTIVE1 -1
 #define FOLLOW_ACTIVE2 -2
 
+typedef enum {
+  OSP_STATS_MAGIC,
+  OSP_STATS_SCORE,
+  OSP_STATS_TEAM,
+  OSP_STATS_KILLS,
+  OSP_STATS_DEATHS,
+  OSP_STATS_SUICIDES,
+  OSP_STATS_TEAM_KILLS,
+  OSP_STATS_DMG_TEAM,
+  OSP_STATS_DMG_GIVEN,
+  OSP_STATS_DMG_RCVD,
+  OSP_STATS_WINS,
+  OSP_STATS_LOSSES,
+  OSP_STATS_CAPS,
+  OSP_STATS_ASSIST,
+  OSP_STATS_DEFENCES,
+  OSP_STATS_RETURNS,
+  OSP_STATS_FLAG_TIME,
+  OSP_STATS_MH,
+  OSP_STATS_GA,
+  OSP_STATS_RA,
+  OSP_STATS_YA,
+  OSP_STATS_WEAPON_MASK,
+  OSP_STATS_NUM
+} ospStat_t;
+
 // client data that stays across multiple levels or tournament restarts
 // this is achieved by writing all the data to cvar strings at game shutdown
 // time and reading them back at connection time.  Anything added here
@@ -223,8 +249,12 @@ typedef struct {
 #define MAX_VOTE_COUNT 3
 
 typedef struct {
-  int attacks;
   int hits;
+  int attacks;
+  int kills;
+  int deaths;
+  int pickups;
+  int drops;
 } accuracy_t;
 
 // client data that stays across multiple respawns, but is cleared
@@ -247,6 +277,7 @@ typedef struct {
 
   qboolean inGame;
 
+  int stats[OSP_STATS_NUM + WP_MAX_WEAPONS];
   accuracy_t accuracies[WP_MAX_WEAPONS];
 } clientPersistant_t;
 
@@ -467,6 +498,7 @@ char *G_NewString(const char *string);
 // g_cmds.c
 //
 void Cmd_Score_f(gentity_t *ent);
+void Cmd_StatsInfo_f(gentity_t *ent);
 void StopFollowing(gentity_t *ent, qboolean release);
 void BroadcastTeamChange(gclient_t *client, team_t oldTeam);
 qboolean SetTeam(gentity_t *ent, const char *s);

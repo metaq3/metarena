@@ -797,8 +797,7 @@ int G_InvulnerabilityEffect( gentity_t *targ, vec3_t dir, vec3_t point, vec3_t i
 }
 #endif
 
-
-void PersAccuracyHit( gentity_t* attacker, int mod ) {
+int ModToWeapon( int mod ) {
 	static int modToWeapon[MOD_NUM_MAX];
 	int weapon = WP_NONE;
 
@@ -818,13 +817,59 @@ void PersAccuracyHit( gentity_t* attacker, int mod ) {
 	modToWeapon[MOD_BFG] 						= WP_BFG;
 	modToWeapon[MOD_BFG_SPLASH] 		= WP_BFG;
 
-	weapon = modToWeapon[mod];
+	return modToWeapon[mod];
+}
+
+/*
+============
+PersAccuracyHit
+
+============
+*/
+void PersAccuracyHit( gentity_t* attacker, int mod ) {
+	int weapon = ModToWeapon( mod );
 
 	if ( weapon == WP_NONE ) {
 		return;
 	}
 
 	attacker->client->pers.accuracies[weapon].hits++;
+}
+
+/*
+============
+PersKill
+
+Saves kills and suicides to OSP stat. Called every time attacker kills
+someone but before handling target's death.
+============
+*/
+void PersKill( gclient_t* attacker, gclient_t* targ, int mod ) {
+	int weapon = ModToWeapon( mod );
+
+	if ( attacker == targ || mod == MOD_SUICIDE ) {
+		attacker->pers.stats[OSP_STATS_SUICIDES]++;
+		return;
+	}
+
+	if ( weapon == WP_NONE ) {
+		return;
+	}
+
+	if (
+		g_gametype.integer >= GT_TEAM &&
+		attacker->sess.sessionTeam == targ->sess.sessionTeam
+	) {
+		attacker->pers.stats[OSP_STATS_TEAM_KILLS]++;
+		targ->pers.stats[OSP_STATS_DEATHS]++;
+		targ->pers.accuracies[weapon].deaths++;
+		return;
+	}
+
+	attacker->pers.stats[OSP_STATS_KILLS]++;
+	targ->pers.stats[OSP_STATS_DEATHS]++;
+	attacker->pers.accuracies[weapon].kills++;
+	targ->pers.accuracies[weapon].deaths++;
 }
 
 /*
@@ -1084,13 +1129,16 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	if ( attacker->client && client && targ != attacker && targ->health > 0
 			&& targ->s.eType != ET_MISSILE
 			&& targ->s.eType != ET_GENERAL) {
-#if 1
 		PersAccuracyHit( attacker, mod );
+		client->pers.stats[OSP_STATS_DMG_RCVD] += damage;
 
+#if 1
 		if ( OnSameTeam( targ, attacker ) ) {
 			attacker->client->ps.persistant[PERS_HITS] -= damage;
+			attacker->client->pers.stats[OSP_STATS_DMG_TEAM] += damage;
 		} else {
 			attacker->client->ps.persistant[PERS_HITS] += damage;
+			attacker->client->pers.stats[OSP_STATS_DMG_GIVEN] += damage;
 		}
 
 		// [meta]: simulate osp
@@ -1152,8 +1200,10 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		}
 			
 		if ( targ->health <= 0 ) {
-			if ( client )
+			if ( client ) {
 				targ->flags |= FL_NO_KNOCKBACK;
+				PersKill( attacker->client, client, mod );
+			}
 
 			if (targ->health < -999)
 				targ->health = -999;
