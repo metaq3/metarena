@@ -1,0 +1,227 @@
+# Commands guide
+
+### phy_movetype
+
+> Default: 0
+
+Controls movement style. Mod reads this value on every level start
+and applies effects on physics.
+Available values:
+
+- 0 - CPM
+- 1 - Vanilla quake 1
+- 3 - Vanilla quake 3
+- 6 - CQ3, Vanilla quake 3 with CPM doublejumps and rampjumps
+
+---
+
+## Weapons
+
+### g_grapple
+
+> Default: 0
+
+Enables grappling hook. Current version of hook is different from vanilla
+one, but for testing purposes only.
+
+---
+
+### g_lgDamage
+
+> Default: 7
+
+Lightning gun damage per hit. Vanilla Quake 3has 8 as default.
+
+---
+
+### g_rgDamage
+
+> Default: 90
+
+Railgun damage per hit. Vanilla Quake 3 has 100 as default.
+
+---
+
+### phy_rocket_speed
+
+> Default: 1000
+
+Rocket speed value. Vanilla Quake 3 has 900 as default, while CPM has 1000 as default.
+
+---
+
+### phy_rocket_damage
+
+> Default: 100
+
+Rocket damage from direct hit. Default is same as vanilla Quake 3.
+
+---
+
+### phy_rocket_splashDamage
+
+> Default: 100
+
+Rocket's splash damage. Default is same as vanilla Quake 3.
+
+---
+
+### phy_rocket_splashRadius
+
+> Default: 120
+
+Rocket's splash radius. Default is same as vanilla Quake 3.
+
+---
+
+## Spawning conditions
+
+### g_startArmor
+
+> Default: 100
+
+Controls spawning player's start armor.
+
+---
+
+### g_wpflags
+
+> Default: 127
+
+Weapons available at start. It's a bitset value, so you'll need to add up
+numbers to combine effect.
+
+List of weapon values:
+
+- 1 - _Machinegun_
+- 2 - _Shotgun_
+- 4 - _Grenade launcher_
+- 8 - _Rocket launcher_
+- 16 - _Lightning gun_
+- 32 - _Railgun_
+- 64 - _Plasma gun_
+- 128 - _BFG_
+
+---
+
+### g_frozenLateJoin
+
+> Default: 0
+
+When set to 1, players joining match mid-game will spawn frozen. From
+OSP Freeze.
+
+---
+
+## Level settings
+
+### g_spawnItems
+
+> Default: 472
+
+Bitset of items that are allowed to spawn on map.
+
+List of item values:
+
+- 1 - _Bad item ( unused )_
+- 2 - _Weapons_
+- 4 - _Ammo_
+- 8 - _Armor_
+- 16 - _Health_
+- 32 - _Powerups ( quad, battle suit, etc. )_
+- 64 - _Holdables_
+- 128 - _Persistant powerups ( used only in Team Arena )_
+- 256 - _Team items ( red and blue flags )_
+
+> [!NOTE]
+> For controlling powerup spawn more precisely, please, look for `g_spawnPowerups`
+
+---
+
+### g_spawnPowerups
+
+> Default: 508
+
+Bitset of powerups that are allowed to spawn on map. Has no effect,
+when `g_spawnItems` prohibits powerup spawn.
+
+List of powerup values:
+
+- 1 - _Null ( unused )_
+- 2 - _Quad_
+- 4 - _Battle suit_
+- 8 - _Haste ( speed )_
+- 16 - _Invisibility_
+- 32 - _Regeneration_
+- 64 - _Flight_
+- 128 - _Red flag_
+- 256 - _Blue flag_
+
+---
+
+## Other player related settings
+
+### g_unfreezeTime
+
+> Default: 240
+
+How long ( in seconds ) can players stay freezed without help of their teammates.
+
+---
+
+### g_maxPacketsLowerBound
+
+> Default: 125
+
+### g_maxPacketsUpperBound
+
+> Default: 125
+
+Limits `cl_maxPackets`. Helps to fight against network issues on
+client side.
+
+_Default value is recommended for comfortable play_
+
+---
+
+### g_maxPacketsLowerBound
+
+> Default: -12
+
+### g_maxPacketsUpperBound
+
+> Default: 20
+
+Limits `cl_timeNudge`.
+
+---
+
+### g_allowPmove
+
+> Default: 1
+
+Allow `pmove_fixed 1` for enhanced client sampling.
+
+---
+
+## Client-specific settings
+
+### be_disabledFeatures
+
+> Default: 0
+
+Bitset of OSP2-BE features which should be restricted on your server.
+
+Current list:
+
+- _1 - Team wallhack_
+- _2 - Model sound_
+- _4 - Alt grenades_
+- _8 - Enemy lightning_
+- _16 - Mark teammate_
+- _32 - Alt shadow_
+- _64 - Alt blood_
+- _128 - Player outline_
+- _256 - Team indicator_
+- _512 - Damage counter_
+- _1024 - Fullbright_
