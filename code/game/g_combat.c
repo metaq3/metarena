@@ -1015,19 +1015,20 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		mass = 200;
 
 		//::OSDF modded. Different vq3/cpm knockback scaling
-        if ((targ == attacker) 
-             && (mod == MOD_ROCKET_SPLASH || mod == MOD_ROCKET)
-             && (phy_movetype.integer == 0)){
-          scale = 1.2; 
-        }
+    if (
+			   (targ == attacker) 
+      && (mod == MOD_ROCKET_SPLASH || mod == MOD_ROCKET)
+      && (phy_movetype.integer == 0)
+		) {
+      scale = 1.2; 
+    }
 
-        kvel_z = dir[2] * phy_knockback.value * (float)knockback / mass;  // Calculate vertical knockback without scale
-        VectorScale (dir, scale * phy_knockback.value * (float)knockback / mass, kvel); // Scale knockback
-        kvel[2] = kvel_z; // Apply vertical scale
-        //::OSDF end
+    kvel_z = dir[2] * phy_knockback.value * (float)knockback / mass;  // Calculate vertical knockback without scale
+    VectorScale( dir, scale * phy_knockback.value * (float)knockback / mass, kvel ); // Scale knockback
+    kvel[2] = kvel_z; // Apply vertical scale
+    //::OSDF end
 
-		VectorScale (dir, g_knockback.value * (float)knockback / mass, kvel);
-		VectorAdd (targ->client->ps.velocity, kvel, targ->client->ps.velocity);
+		VectorAdd( targ->client->ps.velocity, kvel, targ->client->ps.velocity );
 
 		// set the timer so that the other client can't cancel
 		// out the movement immediately
@@ -1078,11 +1079,11 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	}
 
 //freeze
-		if ( client ) {
-			if ( targ != attacker && level.time - client->respawnTime < 1000 ) return;
-		} else {
-			if ( DamageBody( targ, attacker, dir, mod, knockback ) ) return;
-		}
+	if ( client ) {
+		if ( targ != attacker && level.time - client->respawnTime < 1000 ) return;
+	} else {
+		if ( DamageBody( targ, attacker, dir, mod, knockback ) ) return;
+	}
 //freeze
 
 	// battlesuit protects from all radius damage (but takes knockback)

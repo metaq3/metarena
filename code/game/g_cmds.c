@@ -937,7 +937,8 @@ void Cmd_FollowCycle_f( gentity_t *ent, int dir ) {
 
 		// Can't follow enemy team
 		if ( g_gametype.integer >= GT_TEAM &&
-			   level.clients[ clientnum ].sess.sessionTeam != ent->client->sess.sessionTeam ) {
+			   level.clients[ clientnum ].sess.sessionTeam != ent->client->sess.sessionTeam &&
+				 ent->client->sess.sessionTeam != TEAM_SPECTATOR ) {
 			continue;
 		}
 
@@ -1937,14 +1938,30 @@ void ClientCommand( int clientNum ) {
 		Cmd_StatsInfo_f (ent);
 		return;
 	}
-	if (Q_stricmp (cmd, "stats") == 0) {
+	if (Q_stricmp (cmd, "player") == 0) {
 		Cmd_PlayerStats_f (ent);
+		return;
+	}
+
+	// Team change should be processed regardless of whether it's intermission
+	// time or not 
+	if (Q_stricmp (cmd, "team") == 0) {
+		Cmd_Team_f (ent);
 		return;
 	}
 
 	// ignore all other commands when at intermission
 	if (level.intermissiontime) {
+		// But should we really "say" command?
+		// Maybe it's better to just notify user that it's not time to run commands?
+#if 0
 		Cmd_Say_f (ent, qfalse, qtrue);
+#else
+		trap_SendServerCommand(
+			clientNum,
+			va( "print \"^3Command ^5%s^3 will not be proccssed untill intermission end^7\n\"", cmd )
+		);
+#endif
 		return;
 	}
 
@@ -1968,8 +1985,6 @@ void ClientCommand( int clientNum ) {
 		Cmd_FollowCycle_f (ent, 1);
 	else if (Q_stricmp (cmd, "followprev") == 0)
 		Cmd_FollowCycle_f (ent, -1);
-	else if (Q_stricmp (cmd, "team") == 0)
-		Cmd_Team_f (ent);
 	else if (Q_stricmp (cmd, "where") == 0)
 		Cmd_Where_f (ent);
 	else if (Q_stricmp (cmd, "callvote") == 0)
@@ -1984,8 +1999,6 @@ void ClientCommand( int clientNum ) {
 		Cmd_GameCommand_f( ent );
 	else if (Q_stricmp (cmd, "setviewpos") == 0)
 		Cmd_SetViewpos_f( ent );
-	else if (Q_stricmp (cmd, "stats") == 0)
-		Cmd_Stats_f( ent );
 //freeze
 	else if ( Q_stricmp( cmd, "drop" ) == 0 )
 		Cmd_Drop_f( ent );

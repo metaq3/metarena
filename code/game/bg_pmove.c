@@ -655,7 +655,10 @@ static void PM_GrappleMove( playerState_t* ps ) {
 	vec3_t vel;
 	float vlen;
 
-	VectorSubtract(ps->grapplePoint, ps->origin, vel);
+	// Oh my god, shitcode!
+	AngleVectors( ps->viewangles, vel, NULL, NULL );
+
+	// VectorSubtract( ps->grapplePoint, ps->origin, vel );
 	vlen = VectorLength(ps->velocity);
 	VectorNormalize( vel );
 

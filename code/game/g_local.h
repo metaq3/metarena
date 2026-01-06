@@ -282,7 +282,7 @@ typedef struct {
 } clientPersistant_t;
 
 // unlagged
-#define NUM_CLIENT_HISTORY 18
+#define NUM_CLIENT_HISTORY 64
 
 typedef struct {
   vec3_t mins, maxs;

@@ -148,13 +148,13 @@ static void Body_Explode( gentity_t *self ) {
 		if ( e->health < 1 ) continue;
 		if ( e->client->sess.sessionTeam != self->spawnflags ) continue;
 		VectorSubtract( self->s.pos.trBase, e->s.pos.trBase, point );
-		if ( VectorLength( point ) > 100 ) continue;
+		if ( VectorLength( point ) > g_unfreezeRadius.value ) continue;
 		if ( is_spectator( e->client ) ) continue;
 		if ( !self->count ) {
 			if ( g_gametype.integer == GT_CTF ) {
-				self->count = level.time + 2000;
+				self->count = level.time + g_ctfUnfreezeTime.integer;
 			} else {
-				self->count = level.time + 3000;
+				self->count = level.time + g_tdmUnfreezeTime.integer;
 			}
 			G_Sound( self, CHAN_AUTO, self->noise_index );
 
@@ -165,7 +165,7 @@ static void Body_Explode( gentity_t *self ) {
 			} else if ( self->activator->health < 1 ) {
 			} else {
 				VectorSubtract( self->s.pos.trBase, self->activator->s.pos.trBase, point );
-				if ( VectorLength( point ) > 100 ) {
+				if ( VectorLength( point ) > g_unfreezeRadius.value ) {
 				} else if ( is_spectator( self->activator->client ) ) {
 				} else {
 					e = self->activator;
@@ -373,6 +373,7 @@ qboolean DamageBody( gentity_t *targ, gentity_t *attacker, vec3_t dir, int mod, 
 		strncpy( mapname, Info_ValueForKey( info, "mapname" ), sizeof ( mapname ) - 1 );
 		mapname[ sizeof ( mapname ) - 1 ] = '\0';
 
+#if 0
 		if ( !Q_stricmp( mapname, "q3tourney3" ) ||
 			!Q_stricmp( mapname, "q3dm16" ) ||
 			!Q_stricmp( mapname, "q3dm17" ) ||
@@ -388,6 +389,10 @@ qboolean DamageBody( gentity_t *targ, gentity_t *attacker, vec3_t dir, int mod, 
 			mass = 100;
 		}
 		if ( g_dmflags.integer & 1024 ) mass = 200;
+#else
+		// Frozen bodies have 20% more knockback
+		mass = 200.f / 1.2f;
+#endif
 	}
 
 	if ( attacker->client && targ->freezeState ) {

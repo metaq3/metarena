@@ -1142,15 +1142,15 @@ void LogExit( const char *string ) {
 #endif
 	G_LogPrintf( "Exit: %s\n", string );
 
-	if ( level.intermissionQueued ) {
-		return;
-	}
-
 	level.intermissionQueued = level.time;
 
 	// this will keep the clients from playing any voice sounds
 	// that will get cut off when the queued intermission starts
 	trap_SetConfigstring( CS_INTERMISSION, "1" );
+
+	if ( level.intermissionQueued ) {
+		return;
+	}
 
 	// don't send more than 32 scores (FIXME?)
 	numSorted = level.numConnectedClients;

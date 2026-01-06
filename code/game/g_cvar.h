@@ -31,6 +31,12 @@ G_CVAR(g_dropWeapons, "g_dropWeapons", "0", CVAR_ARCHIVE, 0, qfalse, qfalse)
 G_CVAR(g_gametype, "g_gametype", "0",
        CVAR_SERVERINFO | CVAR_USERINFO | CVAR_LATCH, 0, qfalse, qfalse)
 G_CVAR(g_unfreezeTime, "g_unfreezeTime", "240", CVAR_ARCHIVE, 0, qfalse, qfalse)
+G_CVAR(g_ctfUnfreezeTime, "g_ctfUnfreezeTime", "2000", CVAR_ARCHIVE, 0, qfalse,
+       qfalse)
+G_CVAR(g_tdmUnfreezeTime, "g_tdmUnfreezeTime", "3000", CVAR_ARCHIVE, 0, qfalse,
+       qfalse)
+G_CVAR(g_unfreezeRadius, "g_unfreezeRadius", "100", CVAR_ARCHIVE, 0, qfalse,
+       qfalse)
 G_CVAR(g_frozenlatejoin, "g_frozenLateJoin", "0", CVAR_ARCHIVE, 0, qfalse,
        qfalse)
 G_CVAR(g_maxPacketsLowerBound, "g_maxPacketsLowerBound", "125", CVAR_ARCHIVE, 0,
@@ -46,17 +52,12 @@ G_CVAR(g_weaponMask, "g_weaponMask", "511", CVAR_ARCHIVE, 0, qfalse, qfalse)
 G_CVAR(be_disabledFeatures, "be_disabledFeatures", "0", CVAR_ARCHIVE, 0, qfalse,
        qfalse)
 //::OSDF modded
-G_CVAR(phy_gravity, "phy_gravity", "800", 0, 0, qtrue, qfalse)
-G_CVAR(phy_speed, "phy_speed", "320", 0, 0, qtrue, qfalse)
 G_CVAR(phy_knockback, "phy_knockback", "1000", 0, 0, qtrue, qfalse)
-G_CVAR(phy_quad_factor, "phy_quad_factor", "3", 0, 0, qtrue, qfalse)
-G_CVAR(phy_haste_factor, "phy_haste_factor", "1.3",
-       CVAR_CHEAT | CVAR_SYSTEMINFO, 0, qtrue, qfalse)
 // New variables
 G_CVAR(phy_movetype, "phy_movetype", "0", CVAR_SYSTEMINFO, 0, qtrue, qfalse)
 G_CVAR(g_startArmor, "g_startArmor", "100", CVAR_ARCHIVE, 0, qtrue, qfalse)
 G_CVAR(g_grapple, "g_grapple", "0", CVAR_ARCHIVE, 0, qtrue, qfalse)
-G_CVAR(g_lgDamage, "g_lgDamage", "6", CVAR_ARCHIVE, 0, qtrue, qfalse)
+G_CVAR(g_lgDamage, "g_lgDamage", "7", CVAR_ARCHIVE, 0, qtrue, qfalse)
 G_CVAR(g_rgDamage, "g_rgDamage", "90", CVAR_ARCHIVE, 0, qtrue, qfalse)
 G_CVAR(g_wpflags, "g_wpflags", "0", CVAR_ARCHIVE, 0, qtrue, qfalse)
 G_CVAR(g_weaponlimit, "weaponlimit", "0", CVAR_ARCHIVE, 0, qtrue, qfalse)

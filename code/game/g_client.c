@@ -921,6 +921,10 @@ const char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 		client->pers.accuracies[i].pickups = 0;
 		client->pers.accuracies[i].drops = 0;
 	}
+
+	for (i = 0; i < OSP_STATS_NUM; ++i) {
+		client->pers.stats[i] = 0;
+	}
 	// [meta] <<<
 
 	// count current clients and rank for scoreboard

@@ -27,6 +27,8 @@
 #include "local.h"
 #include "q_shared.h"
 
+#include "g_local.h"
+
 // Variables Declaration
 float    phy_stopspeed;
 // Acceleration
@@ -533,7 +535,7 @@ static void core_FinishWeaponChange( void ) {
 
   pm->ps->weapon = weapon;
   pm->ps->weaponstate = WEAPON_RAISING;
-  pm->ps->weaponTime += pm->movetype == CPM ? 50 : 250;  // Instant weapon switch for cpm
+  pm->ps->weaponTime += pm->movetype == CPM ? (1000 / sv_fps.integer) : 250;  // Instant weapon switch for cpm
   PM_StartTorsoAnim( TORSO_RAISE );
 }
 

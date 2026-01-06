@@ -76,7 +76,6 @@ void G_OSPSendXStatsInfo( int clientNum, int receiver, int weaponMask ) {
     "xstats1 %i %i%s%s", clientNum, weaponMask, weaponStats, stats
   );
 
-
   trap_SendServerCommand( receiver, buffer );
 }
 
