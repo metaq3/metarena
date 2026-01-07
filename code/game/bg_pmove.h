@@ -32,7 +32,7 @@
 extern pmove_t *pm;
 extern pml_t pml;
 
-#ifdef Q3_VM
+#if 1
 #define LIB_ONLY_STATIC
 #else
 #define LIB_ONLY_STATIC static

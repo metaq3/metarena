@@ -141,5 +141,7 @@ void G_OSPShowStatsInfo( int clientNum, int weaponMask ) {
     "statsinfo%s%s", stats, weaponStats
   );
 
+  Com_Printf("DEBUG: sent statsinfo to %s:\n%s\n", level.clients[clientNum].pers.netname, buffer);
+
   trap_SendServerCommand( clientNum, buffer );
 }

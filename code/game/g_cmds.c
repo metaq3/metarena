@@ -3,6 +3,7 @@
 #include "bg_public.h"
 #include "g_local.h"
 #include "g_osp.h"
+#include "q_shared.h"
 
 #ifdef MISSIONPACK
 #include "../../ui/menudef.h"			// for the voice chats
@@ -95,6 +96,8 @@ void Cmd_Score_f( gentity_t *ent ) {
 }
 
 void Cmd_StatsInfo_f( gentity_t *ent ) {
+	Com_Printf("DEBUG: player %s requested statsinfo\n", ent->client->pers.netname);
+
 	G_OSPShowStatsInfo( ent-g_entities, g_weaponMask.integer );
 }
 
