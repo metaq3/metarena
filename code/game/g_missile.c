@@ -6,6 +6,23 @@
 
 #define	MISSILE_PRESTEP_TIME	50
 
+
+/*
+================
+G_MissileSetDelaggedLaunchTime
+
+================
+*/
+
+void G_MissileSetDelaggedLaunchTime( gentity_t *self, gentity_t *bolt ) {
+	if ( !self->client || !g_unlagged.integer ) {
+		bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;
+		return;
+	}
+
+	bolt->s.pos.trTime = self->client->lastCmdTime - MISSILE_PRESTEP_TIME;
+}
+
 /*
 ================
 G_BounceMissile
@@ -698,7 +715,8 @@ gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->s.otherEntityNum = self->s.number;
 
 	bolt->s.pos.trType = TR_LINEAR;
-	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
+
+	G_MissileSetDelaggedLaunchTime( self, bolt );
 	VectorCopy( start, bolt->s.pos.trBase );
 	SnapVector( bolt->s.pos.trBase );			// save net bandwidth
 	VectorScale( dir, phy_rocket_speed.integer, bolt->s.pos.trDelta );
