@@ -1083,12 +1083,16 @@ void SpectatorClientEndFrame( gentity_t *ent ) {
 				ent->client->ps.pm_flags |= PMF_FOLLOW;
 				ent->client->ps.eFlags = flags;
 				return;
-			} else {
-				// drop them to free spectators unless they are dedicated camera followers
-				if ( ent->client->sess.spectatorClient >= 0 ) {
-					StopFollowing( ent, qtrue );
-				}
 			}
+		}
+
+		if ( ent->client->ps.pm_flags & PMF_FOLLOW ) {
+			// drop them to free spectators unless they are dedicated camera followers
+			if ( ent->client->sess.spectatorClient >= 0 ) {
+				StopFollowing( ent, qtrue );
+			}
+
+			ClientBegin( ent->client - level.clients );
 		}
 	}
 
