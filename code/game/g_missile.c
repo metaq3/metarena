@@ -20,7 +20,14 @@ void G_MissileSetDelaggedLaunchTime( gentity_t *self, gentity_t *bolt ) {
 		return;
 	}
 
-	bolt->s.pos.trTime = self->client->lastCmdTime - MISSILE_PRESTEP_TIME;
+	// We need to sync it back some time later, so client sees rocket at the
+	// same position as client.
+	bolt->lastSync = Com_Clamp(
+		level.time - g_maxMissileDelag.integer,
+		level.time,
+		self->client->lastCmdTime
+	);
+	bolt->s.pos.trTime = bolt->lastSync - MISSILE_PRESTEP_TIME;
 }
 
 /*
@@ -442,6 +449,43 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 	trap_LinkEntity( ent );
 }
 
+/*
+================
+G_DelagMissile
+
+Compensate lag between server and client, so server sees actual position and client
+feels it right. Syncs missile's lastSync.
+================
+*/
+void G_DelagMissile( gentity_t *ent ) {
+	int persLevelTime;
+	int persPrevLevelTime;
+
+	const int stepmsec = level.time - level.previousTime;
+
+	if ( ent->s.eType != ET_MISSILE || stepmsec <= 0 ) {
+		return;
+	}
+
+	persLevelTime = level.time;
+	persPrevLevelTime = level.previousTime;
+	
+	while ( ent->lastSync < persPrevLevelTime && ent->inuse && !ent->freeAfterEvent ) {
+		G_TimeShiftAllClients( ent->lastSync, ent->parent );
+
+		level.previousTime = ent->lastSync;
+		level.time = level.previousTime + stepmsec;
+
+		G_RunMissile( ent );
+
+		level.time = persLevelTime;
+		level.previousTime = persPrevLevelTime;
+
+		G_UnTimeShiftAllClients( ent->parent );
+
+		ent->lastSync += stepmsec;
+	}
+}
 
 /*
 ================
@@ -550,7 +594,7 @@ gentity_t *fire_plasma (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->s.otherEntityNum = self->s.number;
 
 	bolt->s.pos.trType = TR_LINEAR;
-	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
+	G_MissileSetDelaggedLaunchTime( self, bolt );
 	VectorCopy( start, bolt->s.pos.trBase );
 	SnapVector( bolt->s.pos.trBase );			// save net bandwidth
 	VectorScale( dir, 2000, bolt->s.pos.trDelta );
@@ -601,7 +645,7 @@ gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->s.otherEntityNum = self->s.number;
 
 	bolt->s.pos.trType = TR_GRAVITY;
-	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
+	G_MissileSetDelaggedLaunchTime( self, bolt );
 	VectorCopy( start, bolt->s.pos.trBase );
 	VectorScale( dir, 700, bolt->s.pos.trDelta );
 	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth

@@ -30,6 +30,8 @@ G_CVAR(g_dropWeapons, "g_dropWeapons", "0", CVAR_ARCHIVE, 0, qfalse, qfalse)
 // latched vars
 G_CVAR(g_gametype, "g_gametype", "0",
        CVAR_SERVERINFO | CVAR_USERINFO | CVAR_LATCH, 0, qfalse, qfalse)
+G_CVAR(g_maxMissileDelag, "g_maxMissileDelag", "200", CVAR_ARCHIVE, 0, qfalse,
+       qfalse)
 G_CVAR(g_unfreezeTime, "g_unfreezeTime", "240", CVAR_ARCHIVE, 0, qfalse, qfalse)
 G_CVAR(g_ctfUnfreezeTime, "g_ctfUnfreezeTime", "2000", CVAR_ARCHIVE, 0, qfalse,
        qfalse)

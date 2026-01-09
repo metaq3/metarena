@@ -161,6 +161,8 @@ struct gentity_s {
   qboolean freezeState;
   qboolean readyBegin;
   // freeze
+
+  int lastSync; // for unlagged features
 };
 
 typedef enum {
@@ -600,6 +602,7 @@ void TossClientCubes(gentity_t *self);
 // g_missile.c
 //
 void G_RunMissile(gentity_t *ent);
+void G_DelagMissile(gentity_t *ent);
 
 gentity_t *fire_blaster(gentity_t *self, vec3_t start, vec3_t aimdir);
 gentity_t *fire_plasma(gentity_t *self, vec3_t start, vec3_t aimdir);
