@@ -598,7 +598,7 @@ void core_Weapon( void ) {
 
   // change weapon if time
   if ( pm->ps->weaponstate == WEAPON_DROPPING ) {
-    core_FinishWeaponChange( );
+    core_FinishWeaponChange();
     return;
   }
 
@@ -732,18 +732,13 @@ void phy_PmoveSingle(pmove_t *pmove) {
       client->sync.fireStart = G_BoundClientTime( client );
 
       // Do not sync "back", so players cannot exploit higher fire rate
-      if ( client->sync.lastFireSync < client->sync.fireStart ) {
+      if ( client->sync.nextLegalSync < client->sync.fireStart ) {
         client->sync.fireSync = client->sync.fireStart;
       }
     }
 
     pm->ps->eFlags |= EF_FIRING;
   } else {
-    if (pm->ps->eFlags & EF_FIRING) {
-      // Save information about last sync time
-      client->sync.lastFireSync = level.time;
-    }
-
     pm->ps->eFlags &= ~EF_FIRING;
   }
   // clear the respawned flag if attack and use are cleared

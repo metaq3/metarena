@@ -431,6 +431,7 @@ void core_WeaponDelagged( gclient_t *client ) {
   int persPrevLevelTime = level.previousTime;
   int stepmsec = level.time - level.previousTime;
   int oldPmlMsec = pml.msec;
+  int nextLegalSync;
 
   core_Weapon();
 
@@ -460,10 +461,18 @@ void core_WeaponDelagged( gclient_t *client ) {
 
     client->sync.fireSync += stepmsec;
 
-    // lastFireSync could be set to level.time in core_Weapon, so do not
-    // desync it back
-    if (client->sync.lastFireSync < client->sync.fireSync) {
-      client->sync.lastFireSync = client->sync.fireSync;
+    // Calculate next time we can trust client and sync to it
+    nextLegalSync = client->sync.fireSync;
+
+    // If we have weapon reloading, chaning or something we have to
+    // wait for, add it to the sync so we're really waiting for it
+    // without any possibility for client to desync it
+    if (pm->ps->weaponTime > 0) {
+      nextLegalSync += pm->ps->weaponTime;
+    }
+
+    if (client->sync.nextLegalSync < nextLegalSync) {
+      client->sync.nextLegalSync = nextLegalSync;
     }
   }
 
