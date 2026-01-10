@@ -20,13 +20,9 @@ void G_MissileSetDelaggedLaunchTime( gentity_t *self, gentity_t *bolt ) {
 		return;
 	}
 
-	// We need to sync it back some time later, so client sees rocket at the
+	// We need to sync it with client some time later, so server sees rocket at the
 	// same position as client.
-	bolt->lastSync = Com_Clamp(
-		level.time - g_maxMissileDelag.integer,
-		level.time,
-		self->client->lastCmdTime
-	);
+	bolt->lastSync = self->client->sync.lastAttack;
 	bolt->s.pos.trTime = bolt->lastSync - MISSILE_PRESTEP_TIME;
 }
 

@@ -24,10 +24,12 @@
 //
 // all phy/* code is part of bg_pmove  (both games player movement code)
 // takes playerstate and usercmd as input, and returns a modifed playerstate
+#include "bg_public.h"
 #include "local.h"
 #include "q_shared.h"
 
 #include "g_local.h"
+#include "g_predict.h"
 
 // Variables Declaration
 float    phy_stopspeed;
@@ -526,7 +528,7 @@ void core_Friction(void) {
   VectorScale(vel, newspeed, vel);
 }
 
-static void core_FinishWeaponChange( void ) {
+static void core_FinishWeaponChange( gclient_t* client ) {
   int   weapon;
 
   weapon = pm->cmd.weapon;
@@ -551,7 +553,10 @@ static void core_BeginWeaponChange( int weapon ) {
 }
 
 void core_Weapon( void ) {
+  gclient_t *client;
   int   addTime;
+
+  client = &level.clients[ pm->ps->clientNum ];
 
   // don't allow attack until all buttons are up
   if ( pm->ps->pm_flags & PMF_RESPAWNED ) { return; }
@@ -593,7 +598,7 @@ void core_Weapon( void ) {
 
   // change weapon if time
   if ( pm->ps->weaponstate == WEAPON_DROPPING ) {
-    core_FinishWeaponChange();
+    core_FinishWeaponChange( client );
     return;
   }
 
@@ -644,6 +649,14 @@ void core_Weapon( void ) {
   // fire weapon
   PM_AddEvent( EV_FIRE_WEAPON );
 
+  // When g_unlagWeaponSync is on, sync.fireSync is kept up to
+  // date, but it should not be trusted when it's off ( it's desynced )
+  if ( g_unlagWeaponSync.integer ) {
+    client->sync.lastAttack = client->sync.fireSync;
+  } else {
+    client->sync.lastAttack = G_BoundClientTime( client );
+  }
+
   switch( pm->ps->weapon ) {
   default:
   case WP_GAUNTLET:         addTime =  400; break;
@@ -685,6 +698,8 @@ void core_Weapon( void ) {
 // PmoveSingle
 //================
 void phy_PmoveSingle(pmove_t *pmove) {
+  gclient_t *client;
+
   //::::::::::::::
   memset(&pmove->pmd, 0, sizeof(pmove->pmd)); // Zero out (internal) pmoveData before PmoveSingle happens
   //::::::::::::::
@@ -697,6 +712,8 @@ void phy_PmoveSingle(pmove_t *pmove) {
   pm->numtouch   = 0;
   pm->watertype  = 0;
   pm->waterlevel = 0;
+
+  client = &level.clients[ pm->ps->clientNum ];
 
    // corpses can fly through bodies
   if (pm->ps->stats[STAT_HEALTH] <= 0) { pm->tracemask &= ~CONTENTS_BODY; }
@@ -711,9 +728,15 @@ void phy_PmoveSingle(pmove_t *pmove) {
   if (!(pm->ps->pm_flags & PMF_RESPAWNED)
       && pm->ps->pm_type != PM_INTERMISSION && pm->ps->pm_type != PM_NOCLIP
       && (pm->cmd.buttons & BUTTON_ATTACK) && pm->ps->ammo[pm->ps->weapon]) {
+    if (!(pm->ps->eFlags & EF_FIRING)) {
+      client->sync.fireStart = G_BoundClientTime( client );
+      client->sync.fireSync = client->sync.fireStart;
+    }
+
     pm->ps->eFlags |= EF_FIRING;
   } else {
     pm->ps->eFlags &= ~EF_FIRING;
+    client->sync.fireSync = level.time;
   }
   // clear the respawned flag if attack and use are cleared
   if (pm->ps->stats[STAT_HEALTH] > 0 && !(pm->cmd.buttons & (BUTTON_ATTACK | BUTTON_USE_HOLDABLE))) {

@@ -41,7 +41,7 @@ typedef enum { MOVER_POS1, MOVER_POS2, MOVER_1TO2, MOVER_2TO1 } moverState_t;
 
 typedef struct gentity_s gentity_t;
 typedef struct gclient_s gclient_t;
-
+typedef struct sync_s sync_t;
 struct gentity_s {
   entityState_t s;  // communicated by server to clients
   entityShared_t r; // shared by both the server system and game
@@ -162,7 +162,9 @@ struct gentity_s {
   qboolean readyBegin;
   // freeze
 
-  int lastSync; // for unlagged features
+  qboolean assumed;   // whether entity was assumed by predictor or not
+  qboolean canImpact; // whether it can impact being assumed or not
+  int lastSync;       // for unlagged features
 };
 
 typedef enum {
@@ -292,6 +294,12 @@ typedef struct {
   int leveltime;
 } clientHistory_t;
 
+struct sync_s {
+  int fireStart; // time when client started firing
+  int fireSync;  // syncronization time
+  int lastAttack;
+};
+
 // this structure is cleared on each ClientSpawn(),
 // except for 'client->pers' and 'client->sess'
 struct gclient_s {
@@ -375,6 +383,11 @@ struct gclient_s {
     int enemy;
     int amount;
   } damage;
+
+  // [meta] >>> unlagged
+  // Everything unlagged predicts and external data it uses to predict
+  sync_t sync;
+  // [meta] <<< unlagged
 };
 
 //

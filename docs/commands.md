@@ -204,6 +204,28 @@ Allow `pmove_fixed 1` for enhanced client sampling.
 
 ---
 
+### g_maxPredictionNudge
+
+> Default: 200
+
+Value in milliseconds.
+
+Unlagged projectile weapon behaviour control ( grenade launcher, rocket launcher, plasmagun ). When set to something >0, server will try to match projectile's current position with position that client "should" currently see. Simply speaking, server takes into account client's attack time, and this setting limits how many msec can server "nudge".
+
+When set to 0, no delag is applied.
+
+---
+
+### g_unlagWeaponSync
+
+> Default: 1
+
+Works best when `g_maxPredictionNudge` is greater 0. `g_maxPredictionNudge` only delags projectiles ( rockets, grenades and plasmas ), but `g_unlagWeaponSync` syncs state with client's time, effectively subtracting reload time
+for the second shot to match client's view of things. This makes all consequent shots not being nudged as they're
+synced.
+
+---
+
 ## Client-specific settings
 
 ### be_disabledFeatures

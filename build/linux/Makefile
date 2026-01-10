@@ -4,6 +4,8 @@
 # GNU Make required
 #
 
+CC=clang
+
 COMPILE_PLATFORM=$(shell uname | sed -e 's/_.*//' | tr '[:upper:]' '[:lower:]' | sed -e 's/\//_/g')
 COMPILE_ARCH=$(shell uname -m | sed -e 's/i.86/x86/' | sed -e 's/^arm.*/arm/')
 
@@ -376,6 +378,7 @@ QAOBJ_ = \
   $(B)/$(MOD)/game/bg_lib.o \
   $(B)/$(MOD)/game/bg_misc.o \
   $(B)/$(MOD)/game/bg_pmove.o \
+  $(B)/$(MOD)/game/bg_slidemove.o \
   $(B)/$(MOD)/game/core.o \
   $(B)/$(MOD)/game/slidemove.o \
   $(B)/$(MOD)/game/q3a.o \
@@ -384,6 +387,7 @@ QAOBJ_ = \
   $(B)/$(MOD)/game/vq4.o \
   $(B)/$(MOD)/game/g_freeze.o \
   $(B)/$(MOD)/game/g_osp.o \
+  $(B)/$(MOD)/game/g_predict.o \
   $(B)/$(MOD)/game/g_active.o \
   $(B)/$(MOD)/game/g_arenas.o \
   $(B)/$(MOD)/game/g_bot.o \
