@@ -432,10 +432,19 @@ void core_WeaponDelagged( gclient_t *client ) {
   int stepmsec = level.time - level.previousTime;
   int oldPmlMsec = pml.msec;
 
+  core_Weapon();
+
+  // Sync a little bit, so we don't call core_Weapon twice ( and cause all weapons to
+  // fire at double rate )
+  client->sync.fireSync += pml.msec;
+
   if ( !g_unlagWeaponSync.integer || !client || stepmsec <= 0 || client->sync.fireSync >= level.previousTime ) {
-    core_Weapon();
     return;
   }
+
+  // We're currently working with server's frametime. This will
+  // not cause problems in other parts of code
+  pml.msec = stepmsec;
 
   while ( client->sync.fireSync < level.previousTime ) {
     // TODO: Timeshift playerState so we can ensure legality of
@@ -450,7 +459,16 @@ void core_WeaponDelagged( gclient_t *client ) {
     level.previousTime = persPrevLevelTime;
 
     client->sync.fireSync += stepmsec;
+
+    // lastFireSync could be set to level.time in core_Weapon, so do not
+    // desync it back
+    if (client->sync.lastFireSync < client->sync.fireSync) {
+      client->sync.lastFireSync = client->sync.fireSync;
+    }
   }
+
+  // Restore old value so other pmove handlers can use it
+  pml.msec = oldPmlMsec;
 }
 
 

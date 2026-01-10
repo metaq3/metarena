@@ -730,13 +730,21 @@ void phy_PmoveSingle(pmove_t *pmove) {
       && (pm->cmd.buttons & BUTTON_ATTACK) && pm->ps->ammo[pm->ps->weapon]) {
     if (!(pm->ps->eFlags & EF_FIRING)) {
       client->sync.fireStart = G_BoundClientTime( client );
-      client->sync.fireSync = client->sync.fireStart;
+
+      // Do not sync "back", so players cannot exploit higher fire rate
+      if ( client->sync.lastFireSync < client->sync.fireStart ) {
+        client->sync.fireSync = client->sync.fireStart;
+      }
     }
 
     pm->ps->eFlags |= EF_FIRING;
   } else {
+    if (pm->ps->eFlags & EF_FIRING) {
+      // Save information about last sync time
+      client->sync.lastFireSync = level.time;
+    }
+
     pm->ps->eFlags &= ~EF_FIRING;
-    client->sync.fireSync = level.time;
   }
   // clear the respawned flag if attack and use are cleared
   if (pm->ps->stats[STAT_HEALTH] > 0 && !(pm->cmd.buttons & (BUTTON_ATTACK | BUTTON_USE_HOLDABLE))) {
