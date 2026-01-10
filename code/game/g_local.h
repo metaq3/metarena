@@ -386,7 +386,7 @@ struct gclient_s {
   } damage;
 
   // [meta] >>> unlagged
-  // Everything unlagged predicts and external data it uses to predict
+  // External data for client synchronization
   sync_t sync;
   // [meta] <<< unlagged
 };

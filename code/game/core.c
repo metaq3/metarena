@@ -528,7 +528,7 @@ void core_Friction(void) {
   VectorScale(vel, newspeed, vel);
 }
 
-static void core_FinishWeaponChange( gclient_t* client ) {
+static void core_FinishWeaponChange( ) {
   int   weapon;
 
   weapon = pm->cmd.weapon;
@@ -598,7 +598,7 @@ void core_Weapon( void ) {
 
   // change weapon if time
   if ( pm->ps->weaponstate == WEAPON_DROPPING ) {
-    core_FinishWeaponChange( client );
+    core_FinishWeaponChange( );
     return;
   }
 
