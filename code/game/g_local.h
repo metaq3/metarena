@@ -41,7 +41,7 @@ typedef enum { MOVER_POS1, MOVER_POS2, MOVER_1TO2, MOVER_2TO1 } moverState_t;
 
 typedef struct gentity_s gentity_t;
 typedef struct gclient_s gclient_t;
-
+typedef struct sync_s sync_t;
 struct gentity_s {
   entityState_t s;  // communicated by server to clients
   entityShared_t r; // shared by both the server system and game
@@ -161,6 +161,10 @@ struct gentity_s {
   qboolean freezeState;
   qboolean readyBegin;
   // freeze
+
+  qboolean assumed;   // whether entity was assumed by predictor or not
+  qboolean canImpact; // whether it can impact being assumed or not
+  int lastSync;       // for unlagged features
 };
 
 typedef enum {
@@ -290,6 +294,13 @@ typedef struct {
   int leveltime;
 } clientHistory_t;
 
+struct sync_s {
+  int fireStart; // time when client started firing
+  int fireSync;  // syncronization time
+  int lastAttack;
+  int nextAttack;
+};
+
 // this structure is cleared on each ClientSpawn(),
 // except for 'client->pers' and 'client->sess'
 struct gclient_s {
@@ -373,6 +384,11 @@ struct gclient_s {
     int enemy;
     int amount;
   } damage;
+
+  // [meta] >>> unlagged
+  // External data for client synchronization
+  sync_t sync;
+  // [meta] <<< unlagged
 };
 
 //
@@ -600,6 +616,7 @@ void TossClientCubes(gentity_t *self);
 // g_missile.c
 //
 void G_RunMissile(gentity_t *ent);
+void G_DelagMissile(gentity_t *ent);
 
 gentity_t *fire_blaster(gentity_t *self, vec3_t start, vec3_t aimdir);
 gentity_t *fire_plasma(gentity_t *self, vec3_t start, vec3_t aimdir);

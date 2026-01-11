@@ -23,6 +23,8 @@
 
 #include "local.h"
 #include "q3a.h"
+#include "g_local.h"
+#include "q_shared.h"
 
 void cpm_init(){
   phy_stopspeed           = pm_stopspeed;
@@ -425,8 +427,49 @@ void q3a_WalkMove(void) {
   pm->pmd.a = accelerate;  // accel chosen for this frame
 }
 
+void core_WeaponDelagged( gclient_t *client ) {
+  int persLevelTime = level.time;
+  int persPrevLevelTime = level.previousTime;
+  int stepmsec = level.time - level.previousTime;
+  int oldPmlMsec = pml.msec;
+
+  core_Weapon();
+
+  // Sync a little bit, so we don't call core_Weapon twice ( and cause all weapons to
+  // fire at double rate )
+  client->sync.fireSync += pml.msec;
+
+  if ( !g_unlagWeaponSync.integer || !client || stepmsec <= 0 || client->sync.fireSync >= level.previousTime ) {
+    return;
+  }
+
+  // We're currently working with server's frametime. This will
+  // not cause problems in other parts of code
+  pml.msec = stepmsec;
+
+  while ( client->sync.fireSync < level.previousTime ) {
+    // TODO: Timeshift playerState so we can ensure legality of
+    // this unlagging move.
+
+    level.previousTime = client->sync.fireSync;
+    level.time = level.previousTime + stepmsec;
+
+    core_Weapon();
+
+    level.time = persLevelTime;
+    level.previousTime = persPrevLevelTime;
+
+    client->sync.fireSync += stepmsec;
+  }
+
+  // Restore old value so other pmove handlers can use it
+  pml.msec = oldPmlMsec;
+}
+
 
 void q3a_move(pmove_t* pmove) {
+  gclient_t *client = &level.clients[ pmove->ps->clientNum ];
+
   // set mins, maxs, and viewheight
   PM_CheckDuck();
   // set groundentity
@@ -456,7 +499,7 @@ void q3a_move(pmove_t* pmove) {
   core_GroundTrace();
   PM_SetWaterLevel();
   // weapons
-  core_Weapon();
+  core_WeaponDelagged( client );
   // torso animation
   PM_TorsoAnimation();
   // footstep events / legs animations
