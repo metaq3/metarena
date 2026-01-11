@@ -690,7 +690,10 @@ void core_Weapon( void ) {
   if ( pm->ps->powerups[PW_HASTE] ) {
     addTime /= 1.3;
   }
+
   pm->ps->weaponTime += addTime;
+
+  client->sync.nextAttack = client->sync.lastAttack + pm->ps->weaponTime;
 }
 
 
@@ -699,6 +702,7 @@ void core_Weapon( void ) {
 //================
 void phy_PmoveSingle(pmove_t *pmove) {
   gclient_t *client;
+  int desyncTime;
 
   //::::::::::::::
   memset(&pmove->pmd, 0, sizeof(pmove->pmd)); // Zero out (internal) pmoveData before PmoveSingle happens
@@ -731,9 +735,18 @@ void phy_PmoveSingle(pmove_t *pmove) {
     if (!(pm->ps->eFlags & EF_FIRING)) {
       client->sync.fireStart = G_BoundClientTime( client );
 
+      desyncTime = client->sync.fireStart - client->sync.nextAttack;
+
       // Do not sync "back", so players cannot exploit higher fire rate
-      if ( client->sync.nextLegalSync < client->sync.fireStart ) {
-        client->sync.fireSync = client->sync.fireStart;
+      if ( desyncTime > 0 ) {
+        client->sync.fireSync = G_Clamp(
+          client->sync.fireStart,
+          // This limits how much can we sync "back", preventing
+          // subtracting too much of time from weapon reload ( so it's only
+          // subtracted for the second shot only )
+          client->sync.fireSync - desyncTime,
+          client->sync.fireSync
+        );
       }
     }
 

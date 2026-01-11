@@ -298,7 +298,7 @@ struct sync_s {
   int fireStart; // time when client started firing
   int fireSync;  // syncronization time
   int lastAttack;
-  int nextLegalSync;
+  int nextAttack;
 };
 
 // this structure is cleared on each ClientSpawn(),

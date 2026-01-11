@@ -24,6 +24,7 @@
 #include "local.h"
 #include "q3a.h"
 #include "g_local.h"
+#include "q_shared.h"
 
 void cpm_init(){
   phy_stopspeed           = pm_stopspeed;
@@ -431,7 +432,6 @@ void core_WeaponDelagged( gclient_t *client ) {
   int persPrevLevelTime = level.previousTime;
   int stepmsec = level.time - level.previousTime;
   int oldPmlMsec = pml.msec;
-  int nextLegalSync;
 
   core_Weapon();
 
@@ -460,20 +460,6 @@ void core_WeaponDelagged( gclient_t *client ) {
     level.previousTime = persPrevLevelTime;
 
     client->sync.fireSync += stepmsec;
-
-    // Calculate next time we can trust client and sync to it
-    nextLegalSync = client->sync.fireSync;
-
-    // If we have weapon reloading, chaning or something we have to
-    // wait for, add it to the sync so we're really waiting for it
-    // without any possibility for client to desync it
-    if (pm->ps->weaponTime > 0) {
-      nextLegalSync += pm->ps->weaponTime;
-    }
-
-    if (client->sync.nextLegalSync < nextLegalSync) {
-      client->sync.nextLegalSync = nextLegalSync;
-    }
   }
 
   // Restore old value so other pmove handlers can use it
