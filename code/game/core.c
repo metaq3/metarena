@@ -619,6 +619,17 @@ void core_Weapon( void ) {
     return;
   }
 
+  if (
+    g_dampOversync.integer && g_unlagWeaponSync.integer &&
+    client->sync.fireSync > level.time + g_oversyncNudge.integer
+  ) {
+    pm->ps->weaponTime += client->sync.fireSync - level.time - g_oversyncNudge.integer;
+
+    if ( pm->ps->weaponTime > 0 ) {
+      return;
+    }
+  }
+
   // start the animation even if out of ammo
   if ( pm->ps->weapon == WP_GAUNTLET ) {
     // the guantlet only "fires" when it actually hits something
@@ -641,14 +652,6 @@ void core_Weapon( void ) {
     return;
   }
 
-  // take an ammo away if not infinite
-  if ( pm->ps->ammo[ pm->ps->weapon ] != -1 ) {
-    pm->ps->ammo[ pm->ps->weapon ]--;
-  }
-
-  // fire weapon
-  PM_AddEvent( EV_FIRE_WEAPON );
-
   // When g_unlagWeaponSync is on, sync.fireSync is kept up to
   // date, but it should not be trusted when it's off ( it's desynced )
   if ( g_unlagWeaponSync.integer ) {
@@ -656,6 +659,14 @@ void core_Weapon( void ) {
   } else {
     client->sync.lastAttack = G_BoundClientTime( client );
   }
+
+  // take an ammo away if not infinite
+  if ( pm->ps->ammo[ pm->ps->weapon ] != -1 ) {
+    pm->ps->ammo[ pm->ps->weapon ]--;
+  }
+
+  // fire weapon
+  PM_AddEvent( EV_FIRE_WEAPON );
 
   switch( pm->ps->weapon ) {
   default:
