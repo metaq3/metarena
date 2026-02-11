@@ -1325,6 +1325,7 @@ qboolean G_RadiusDamage ( vec3_t origin, gentity_t *attacker, float damage, floa
 	vec3_t		v;
 	vec3_t		dir;
 	int			i, e;
+	float		knockbackFactor;
 	qboolean	hitClient = qfalse;
 
 	if ( radius < 1 ) {
@@ -1343,6 +1344,33 @@ qboolean G_RadiusDamage ( vec3_t origin, gentity_t *attacker, float damage, floa
 
 		if (ent == ignore)
 			continue;
+
+		VectorSubtract (ent->r.currentOrigin, origin, dir);
+
+		if (
+			ent->knockbackness > 0.0f
+			// Make grenade + rocket jumps easier
+			&& ent->nextthink - level.time > 200
+		) {
+			dist = VectorLength(dir);
+
+			if (dist < 10.f) {
+				dist = 10.f;
+			}
+
+			knockbackFactor = damage * ( 1.0 - dist / radius ) * ent->knockbackness / dist;
+
+			if (knockbackFactor > 0.0f) {
+				ent->s.pos.trType = ent->baseTrType;
+				ent->s.pos.trTime = level.time;
+
+				dir[2] += 12; // make objects a bit jumpier towards "up" axis
+				VectorCopy(ent->r.currentOrigin, ent->s.pos.trBase);
+				VectorMA(ent->s.pos.trDelta, knockbackFactor, dir, ent->s.pos.trDelta);
+				dir[2] -= 12;
+			}
+		}
+
 		if (!ent->takedamage)
 			continue;
 
@@ -1368,7 +1396,6 @@ qboolean G_RadiusDamage ( vec3_t origin, gentity_t *attacker, float damage, floa
 			if( LogAccuracyHit( ent, attacker ) ) {
 				hitClient = qtrue;
 			}
-			VectorSubtract (ent->r.currentOrigin, origin, dir);
 			// push the center of mass higher than the origin so players
 			// get knocked into the air more
 			dir[2] += 24;

@@ -356,8 +356,7 @@ void G_InitGentity( gentity_t *e ) {
 	e->s.number = e - g_entities;
 	e->r.ownerNum = ENTITYNUM_NONE;
 	e->tag = TAG_NONE;
-	e->assumed = qfalse;
-	e->canImpact = qfalse;
+	e->knockbackness = 0.0f;
 }
 
 

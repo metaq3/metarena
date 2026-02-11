@@ -163,9 +163,9 @@ struct gentity_s {
   qboolean readyBegin;
   // freeze
 
-  qboolean assumed;   // whether entity was assumed by predictor or not
-  qboolean canImpact; // whether it can impact being assumed or not
-  int lastSync;       // for unlagged features
+  int lastSync;        // for unlagged features
+  float knockbackness; // how much knockback does this entity gets
+  trType_t baseTrType;
 };
 
 typedef enum {

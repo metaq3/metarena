@@ -30,6 +30,12 @@ G_CVAR(g_dropWeapons, "g_dropWeapons", "0", CVAR_ARCHIVE, 0, qfalse, qfalse)
 // latched vars
 G_CVAR(g_gametype, "g_gametype", "0",
        CVAR_SERVERINFO | CVAR_USERINFO | CVAR_LATCH, 0, qfalse, qfalse)
+G_CVAR(g_grenadeKnockbackness, "g_grenadeKnockbackness", "6", CVAR_ARCHIVE, 0,
+       qfalse, qfalse)
+G_CVAR(g_rocketKnockbackness, "g_rocketKnockbackness", "0", CVAR_ARCHIVE, 0,
+       qfalse, qfalse)
+G_CVAR(g_plasmaKnockbackness, "g_plasmaKnockbackness", "0", CVAR_ARCHIVE, 0,
+       qfalse, qfalse)
 G_CVAR(g_dampOversync, "g_dampOversync", "1", CVAR_ARCHIVE, 0, qfalse, qfalse)
 G_CVAR(g_oversyncNudge, "g_oversyncNudge", "10", CVAR_ARCHIVE, 0, qfalse,
        qfalse)

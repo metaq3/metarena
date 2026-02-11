@@ -74,6 +74,18 @@ Rocket's splash radius. Default is same as vanilla Quake 3.
 
 ---
 
+### g_grenadeKnockbackness, g_rocketKnockbackness, g_plasmaKnockbackness
+
+> Defaults:
+> g_grenadeKnockbackness: 6
+> g_rocketKnockbackness: 0
+> g_plasmaKnockbackness: 0
+
+Coefficient for knockback that projectile gets from explosions. Zero is treated as no knockback
+( vanilla behaviour )
+
+---
+
 ## Spawning conditions
 
 ### g_startArmor

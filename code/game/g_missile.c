@@ -583,13 +583,14 @@ gentity_t *fire_plasma (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->splashMethodOfDeath = MOD_PLASMA_SPLASH;
 	bolt->clipmask = MASK_SHOT;
 	bolt->target_ent = NULL;
+	bolt->knockbackness = g_plasmaKnockbackness.value;
 
 	// missile owner
 	bolt->s.clientNum = self->s.clientNum;
 	// unlagged
 	bolt->s.otherEntityNum = self->s.number;
 
-	bolt->s.pos.trType = TR_LINEAR;
+	bolt->baseTrType = bolt->s.pos.trType = TR_LINEAR;
 	G_MissileSetDelaggedLaunchTime( self, bolt );
 	VectorCopy( start, bolt->s.pos.trBase );
 	SnapVector( bolt->s.pos.trBase );			// save net bandwidth
@@ -631,6 +632,7 @@ gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->splashMethodOfDeath = MOD_GRENADE_SPLASH;
 	bolt->clipmask = MASK_SHOT;
 	bolt->target_ent = NULL;
+	bolt->knockbackness = g_grenadeKnockbackness.value;
 
 	if ( self->s.powerups & (1 << PW_QUAD) )
 		bolt->s.powerups |= (1 << PW_QUAD);
@@ -640,7 +642,7 @@ gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t dir) {
 	// unlagged
 	bolt->s.otherEntityNum = self->s.number;
 
-	bolt->s.pos.trType = TR_GRAVITY;
+	bolt->baseTrType = bolt->s.pos.trType = TR_GRAVITY;
 	G_MissileSetDelaggedLaunchTime( self, bolt );
 	VectorCopy( start, bolt->s.pos.trBase );
 	VectorScale( dir, 700, bolt->s.pos.trDelta );
@@ -745,6 +747,7 @@ gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->splashMethodOfDeath = MOD_ROCKET_SPLASH;
 	bolt->clipmask = MASK_SHOT;
 	bolt->target_ent = NULL;
+	bolt->knockbackness = g_rocketKnockbackness.value;
 
 	if ( self->s.powerups & (1 << PW_QUAD) )
 		bolt->s.powerups |= (1 << PW_QUAD);
@@ -754,7 +757,7 @@ gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	// unlagged
 	bolt->s.otherEntityNum = self->s.number;
 
-	bolt->s.pos.trType = TR_LINEAR;
+	bolt->baseTrType = bolt->s.pos.trType = TR_LINEAR;
 
 	G_MissileSetDelaggedLaunchTime( self, bolt );
 	VectorCopy( start, bolt->s.pos.trBase );

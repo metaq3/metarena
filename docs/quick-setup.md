@@ -27,6 +27,11 @@ set phy_rocket_damage 100
 set phy_rocket_splashDamage 100
 set phy_rocket_splashRadius 120
 
+// May grenades only react to explosions
+set g_grenadeKnockbackness 6
+set g_rocketKnockbackness 0
+set g_plasmaKnockbackness 0
+
 // Players joining match mid-game will spawn frozen
 set g_frozenLateJoin 1
 
