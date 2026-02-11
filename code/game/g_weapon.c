@@ -414,6 +414,9 @@ void weapon_grenadelauncher_fire (gentity_t *ent) {
 	m->damage *= s_quadFactor;
 	m->splashDamage *= s_quadFactor;
 
+	// Sync missile with client's time
+	G_DelagMissile( m );
+
 //	VectorAdd( m->s.pos.trDelta, ent->client->ps.velocity, m->s.pos.trDelta );	// "real" physics
 }
 
@@ -431,6 +434,9 @@ void Weapon_RocketLauncher_Fire (gentity_t *ent) {
 	m = fire_rocket (ent, muzzle, forward);
 	m->damage *= s_quadFactor;
 	m->splashDamage *= s_quadFactor;
+
+	// Sync missile with client's time
+	G_DelagMissile( m );
 
 //	VectorAdd( m->s.pos.trDelta, ent->client->ps.velocity, m->s.pos.trDelta );	// "real" physics
 }
@@ -450,6 +456,9 @@ void Weapon_Plasmagun_Fire (gentity_t *ent) {
 	m = fire_plasma (ent, muzzle, forward);
 	m->damage *= s_quadFactor;
 	m->splashDamage *= s_quadFactor;
+
+	// Sync missile with client's time
+	G_DelagMissile( m );
 
 //	VectorAdd( m->s.pos.trDelta, ent->client->ps.velocity, m->s.pos.trDelta );	// "real" physics
 }

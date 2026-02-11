@@ -159,6 +159,62 @@ List of powerup values:
 
 ---
 
+## Unlagged
+
+### g_maxPredictionNudge
+
+> Default: 200
+
+Value in milliseconds.
+
+Unlagged projectile weapon behaviour control ( grenade launcher, rocket launcher, plasmagun ). When set to something >0, server will try to match projectile's current position with position that client "should" currently see. Simply speaking, server takes into account client's attack time, and this setting limits how many msec can server "nudge".
+
+When set to 0, no delag is applied.
+
+---
+
+### g_unlagWeaponSync
+
+> Default: 1
+
+Works best when `g_maxPredictionNudge` is greater 0. `g_maxPredictionNudge` only delags projectiles ( rockets, grenades and plasmas ), but `g_unlagWeaponSync` syncs state with client's time, effectively subtracting reload time
+for the second shot to match client's view of things. This makes all consequent shots not being nudged as they're
+synced.
+
+> [!TIP]
+> It's recommended to use this option with `g_dampOversync` set to 1 and `g_oversyncNudge` set to positive value around 10. This prevents users from benifiting exploits of this system.
+
+---
+
+### g_dampOversync
+
+> Default: 1
+
+For technical reasons, it's possible to attack at higher rate or fire through thick walls because of the way synchronization works and how quake deals with delayed packets. This happens because of snapshots covering huge time segment ( basically greater than `1000 / sv_fps` ), making synchronized earlier state be oversynchronized.
+
+Oversync damping prevents benefiting and abusing such exploits, forcing player to wait that oversynced time, making:
+
+- Rockets not spawning behind the player and thus not firing through walls
+- Weapon not reloading so fast
+
+> [!NOTE]
+> All mentioned above things happen only with really lossy connections or
+> players who set `com_maxfps` really low. It almost does not affect normal players.
+
+Paired with `g_oversyncNudge`.
+
+---
+
+### g_oversyncNudge
+
+> Default: 10
+
+Oversynchronization threshold, when server starts to actually make something to prevent it. Also subtracted from oversync penalty.
+
+Values below `50` fit best.
+
+---
+
 ## Other player related settings
 
 ### g_unfreezeTime

@@ -24,10 +24,12 @@
 //
 // all phy/* code is part of bg_pmove  (both games player movement code)
 // takes playerstate and usercmd as input, and returns a modifed playerstate
+#include "bg_public.h"
 #include "local.h"
 #include "q_shared.h"
 
 #include "g_local.h"
+#include "g_predict.h"
 
 // Variables Declaration
 float    phy_stopspeed;
@@ -526,7 +528,7 @@ void core_Friction(void) {
   VectorScale(vel, newspeed, vel);
 }
 
-static void core_FinishWeaponChange( void ) {
+static void core_FinishWeaponChange( ) {
   int   weapon;
 
   weapon = pm->cmd.weapon;
@@ -551,7 +553,10 @@ static void core_BeginWeaponChange( int weapon ) {
 }
 
 void core_Weapon( void ) {
+  gclient_t *client;
   int   addTime;
+
+  client = &level.clients[ pm->ps->clientNum ];
 
   // don't allow attack until all buttons are up
   if ( pm->ps->pm_flags & PMF_RESPAWNED ) { return; }
@@ -614,6 +619,17 @@ void core_Weapon( void ) {
     return;
   }
 
+  if (
+    g_dampOversync.integer && g_unlagWeaponSync.integer &&
+    client->sync.fireSync > level.time + g_oversyncNudge.integer
+  ) {
+    pm->ps->weaponTime += client->sync.fireSync - level.time - g_oversyncNudge.integer;
+
+    if ( pm->ps->weaponTime > 0 ) {
+      return;
+    }
+  }
+
   // start the animation even if out of ammo
   if ( pm->ps->weapon == WP_GAUNTLET ) {
     // the guantlet only "fires" when it actually hits something
@@ -634,6 +650,14 @@ void core_Weapon( void ) {
     PM_AddEvent( EV_NOAMMO );
     pm->ps->weaponTime += 500;
     return;
+  }
+
+  // When g_unlagWeaponSync is on, sync.fireSync is kept up to
+  // date, but it should not be trusted when it's off ( it's desynced )
+  if ( g_unlagWeaponSync.integer ) {
+    client->sync.lastAttack = client->sync.fireSync;
+  } else {
+    client->sync.lastAttack = G_BoundClientTime( client );
   }
 
   // take an ammo away if not infinite
@@ -677,7 +701,10 @@ void core_Weapon( void ) {
   if ( pm->ps->powerups[PW_HASTE] ) {
     addTime /= 1.3;
   }
+
   pm->ps->weaponTime += addTime;
+
+  client->sync.nextAttack = client->sync.lastAttack + pm->ps->weaponTime;
 }
 
 
@@ -685,6 +712,9 @@ void core_Weapon( void ) {
 // PmoveSingle
 //================
 void phy_PmoveSingle(pmove_t *pmove) {
+  gclient_t *client;
+  int desyncTime;
+
   //::::::::::::::
   memset(&pmove->pmd, 0, sizeof(pmove->pmd)); // Zero out (internal) pmoveData before PmoveSingle happens
   //::::::::::::::
@@ -697,6 +727,8 @@ void phy_PmoveSingle(pmove_t *pmove) {
   pm->numtouch   = 0;
   pm->watertype  = 0;
   pm->waterlevel = 0;
+
+  client = &level.clients[ pm->ps->clientNum ];
 
    // corpses can fly through bodies
   if (pm->ps->stats[STAT_HEALTH] <= 0) { pm->tracemask &= ~CONTENTS_BODY; }
@@ -711,6 +743,24 @@ void phy_PmoveSingle(pmove_t *pmove) {
   if (!(pm->ps->pm_flags & PMF_RESPAWNED)
       && pm->ps->pm_type != PM_INTERMISSION && pm->ps->pm_type != PM_NOCLIP
       && (pm->cmd.buttons & BUTTON_ATTACK) && pm->ps->ammo[pm->ps->weapon]) {
+    if (!(pm->ps->eFlags & EF_FIRING)) {
+      client->sync.fireStart = G_BoundClientTime( client );
+
+      desyncTime = client->sync.fireStart - client->sync.nextAttack;
+
+      // Do not sync "back", so players cannot exploit higher fire rate
+      if ( desyncTime > 0 ) {
+        client->sync.fireSync = G_Clamp(
+          client->sync.fireStart,
+          // This limits how much can we sync "back", preventing
+          // subtracting too much of time from weapon reload ( so it's only
+          // subtracted for the second shot only )
+          client->sync.fireSync - desyncTime,
+          client->sync.fireSync
+        );
+      }
+    }
+
     pm->ps->eFlags |= EF_FIRING;
   } else {
     pm->ps->eFlags &= ~EF_FIRING;
