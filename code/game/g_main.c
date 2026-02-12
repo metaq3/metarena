@@ -1442,127 +1442,12 @@ qboolean CheckExit( void ) {
 
 // [meta] >>>
 
-qboolean IsStatisticallySignificant(int weapon, accuracy_t accuracy) {
-	static int minHits[WP_MAX_WEAPONS];
-
-	// Hide this weapons
-	minHits[WP_NONE] = -1;
-	minHits[WP_GAUNTLET] = -1;
-	minHits[WP_MACHINEGUN] = -1;
-
-	minHits[WP_SHOTGUN] = 20;
-	minHits[WP_GRENADE_LAUNCHER] = 5;
-	minHits[WP_ROCKET_LAUNCHER] = 10;
-	minHits[WP_LIGHTNING] = 25;
-	minHits[WP_RAILGUN] = 10;
-	minHits[WP_PLASMAGUN] = 50;
-	minHits[WP_BFG] = 20;
-
-	if ( weapon < WP_BFG && minHits[weapon] != -1 && accuracy.attacks >= minHits[weapon] ) {
-		return qtrue;
-	}
-
-	return qfalse;
-}
-
-void CalculateStats( gclient_t** bestWeaponStats ) {
-	int i;
-	int wp;
-	gclient_t *client;
-	float bestAccuracy;
-	float ourAccuracy;
-
-	for ( i = 0; i < WP_MAX_WEAPONS; ++i ) {
-		bestWeaponStats[i] = NULL;
-	}
-
-	// Calculate stats
-
-	for ( i = 0; i < MAX_CLIENTS; ++i ) {
-		client = g_entities[i].client;
-
-		if ( !client ) {
-			continue;
-		}
-
-		for (wp = 0; wp < WP_MAX_WEAPONS; ++wp) {
-			if ( !IsStatisticallySignificant(wp, client->pers.accuracies[wp]) ) {
-				continue;
-			}
-
-			if (bestWeaponStats[wp] == NULL) {
-				bestWeaponStats[wp] = client;
-				continue;
-			}
-
-			bestAccuracy = (float)bestWeaponStats[wp]->pers.accuracies[wp].hits /
-										 (float)bestWeaponStats[wp]->pers.accuracies[wp].attacks;
-			ourAccuracy = (float)client->pers.accuracies[wp].hits /
-										(float)client->pers.accuracies[wp].attacks;
-
-      if (ourAccuracy > bestAccuracy) {
-				bestWeaponStats[wp] = client;
-			}
-		}
-	}
-}
-
-const char* WeaponName( int weapon ) {
-	static const char* weaponNames[WP_MAX_WEAPONS];
-
-	weaponNames[WP_GAUNTLET] = "G ";
-	weaponNames[WP_MACHINEGUN] = "MG";
-	weaponNames[WP_SHOTGUN] = "SG";
-	weaponNames[WP_GRENADE_LAUNCHER] = "GL";
-	weaponNames[WP_ROCKET_LAUNCHER] = "RL";
-	weaponNames[WP_LIGHTNING] = "LG";
-	weaponNames[WP_RAILGUN] = "RG";
-	weaponNames[WP_PLASMAGUN] = "PG";
-	weaponNames[WP_BFG] = "BG";
-
-	return weaponNames[weapon];
-}
-
 void PrintPersonalStats( int clientNum ) {
 	G_OSPSendXStatsInfo( clientNum, clientNum, g_weaponMask.integer );
 }
 
 void PrintStats( void ) {
-	static gclient_t* bestWeaponStats[WP_MAX_WEAPONS];
 	int i;
-	int wp;
-	float accuracy;
-	char cleanName[1024];
-
-	CalculateStats( bestWeaponStats );
-
-	// Broadcast best accuracies
-
-	G_BroadcastServerCommand( -1, "print \"^3 ---- Best match accuracies ---- ^7\n\"" );
-	G_BroadcastServerCommand( -1, "print \"\n\"" );
-
-	for ( wp = WP_MACHINEGUN; wp < WP_BFG; ++wp ) {
-		if ( bestWeaponStats[wp] == NULL ) {
-			continue;
-		}
-
-		accuracy = (float)bestWeaponStats[wp]->pers.accuracies[wp].hits /
-							 (float)bestWeaponStats[wp]->pers.accuracies[wp].attacks;
-
-		BG_CleanName( bestWeaponStats[wp]->pers.netname, cleanName, sizeof(cleanName), "<unknown>" );
-
-		G_BroadcastServerCommand( -1,
-			va("print \"    ^6%s: ^5%.2f ( %i/%i )^7 - %s^7\n\"",
-			WeaponName(wp),
-			accuracy * 100.f,
-			bestWeaponStats[wp]->pers.accuracies[wp].hits,
-			bestWeaponStats[wp]->pers.accuracies[wp].attacks,
-			cleanName
-		));
-	}
-
-	G_BroadcastServerCommand( -1, "print \"\n\"" );
-	G_BroadcastServerCommand( -1, "print \"^3 ------------------------------- ^7\n\"" );
 
 	for ( i = 0; i < MAX_CLIENTS; ++i ) {
 		if (!g_entities[i].inuse || !g_entities[i].client) {
@@ -1571,6 +1456,8 @@ void PrintStats( void ) {
 
 		PrintPersonalStats(i);
 	}
+
+	G_OSPSendBestStatsInfo(g_weaponMask.integer);
 }
 
 static void CheckExitRules( void ) {
@@ -1587,7 +1474,6 @@ static void CheckExitRules( void ) {
 }
 
 // [meta] <<<
-
 
 static void ClearBodyQue( void ) {
 	int	i;

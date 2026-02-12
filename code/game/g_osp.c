@@ -79,6 +79,106 @@ void G_OSPSendXStatsInfo( int clientNum, int receiver, int weaponMask ) {
   trap_SendServerCommand( receiver, buffer );
 }
 
+qboolean IsStatisticallySignificant(int weapon, accuracy_t accuracy) {
+  static int minHits[WP_MAX_WEAPONS];
+
+  // Hide this weapons
+  minHits[WP_NONE] = -1;
+  minHits[WP_GAUNTLET] = -1;
+  minHits[WP_MACHINEGUN] = -1;
+
+  minHits[WP_SHOTGUN] = 20;
+  minHits[WP_GRENADE_LAUNCHER] = 5;
+  minHits[WP_ROCKET_LAUNCHER] = 10;
+  minHits[WP_LIGHTNING] = 25;
+  minHits[WP_RAILGUN] = 10;
+  minHits[WP_PLASMAGUN] = 50;
+  minHits[WP_BFG] = 20;
+
+  if ( weapon < WP_BFG && minHits[weapon] != -1 && accuracy.attacks >= minHits[weapon] ) {
+    return qtrue;
+  }
+
+  return qfalse;
+}
+
+void CalculateStats( gclient_t** bestWeaponStats ) {
+  int i;
+  int wp;
+  gclient_t *client;
+  float bestAccuracy;
+  float ourAccuracy;
+
+  for ( i = 0; i < WP_MAX_WEAPONS; ++i ) {
+    bestWeaponStats[i] = NULL;
+  }
+
+  // Calculate stats
+
+  for ( i = 0; i < MAX_CLIENTS; ++i ) {
+    client = g_entities[i].client;
+
+    if ( !client ) {
+      continue;
+    }
+
+    for (wp = 0; wp < WP_MAX_WEAPONS; ++wp) {
+      if ( !IsStatisticallySignificant(wp, client->pers.accuracies[wp]) ) {
+        continue;
+      }
+
+      if (bestWeaponStats[wp] == NULL) {
+        bestWeaponStats[wp] = client;
+        continue;
+      }
+
+      bestAccuracy = (float)bestWeaponStats[wp]->pers.accuracies[wp].hits /
+                     (float)bestWeaponStats[wp]->pers.accuracies[wp].attacks;
+      ourAccuracy = (float)client->pers.accuracies[wp].hits /
+                    (float)client->pers.accuracies[wp].attacks;
+
+      if (ourAccuracy > bestAccuracy) {
+        bestWeaponStats[wp] = client;
+      }
+    }
+  }
+}
+
+void G_OSPSendBestStatsInfo( int weaponMask ) {
+  static gclient_t* bestWeaponStats[WP_MAX_WEAPONS];
+  char stats[1024];
+  char weaponstat[1024];
+  int wp = 0;
+  int numWeapons = 0;
+
+  CalculateStats( bestWeaponStats );
+
+  for (wp = 1; wp < WP_NUM_WEAPONS; ++wp) {
+    if ( !(weaponMask & wp) || bestWeaponStats[wp] == NULL ) {
+      continue;
+    }
+
+    numWeapons++;
+
+    weaponstat[0] = 0;
+
+    BG_sprintf( weaponstat, "%i %i %i %i %i %i ",
+      wp,
+      bestWeaponStats[wp] - level.clients,
+      bestWeaponStats[wp]->pers.accuracies[wp].hits,
+      bestWeaponStats[wp]->pers.accuracies[wp].attacks,
+      bestWeaponStats[wp]->pers.accuracies[wp].kills,
+      bestWeaponStats[wp]->pers.accuracies[wp].deaths
+    );
+
+    strcat(stats, weaponstat);
+  }
+
+  strcat(stats, "0");
+
+  G_BroadcastServerCommand( -1, va( "bstats %s", stats ) );
+}
+
 void G_OSPShowStatsInfo( int clientNum, int weaponMask ) {
   static char buffer[1024];
   char stats[1024];
