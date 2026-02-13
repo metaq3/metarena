@@ -720,7 +720,7 @@ void SendPendingPredictableEvents( playerState_t *ps ) {
 		// create temporary entity for event
 		t = G_TempEntity( ps->origin, event );
 		number = t->s.number;
-		BG_PlayerStateToEntityState( ps, &t->s, qtrue );
+		BG_PlayerStateToEntityState( ps, &t->s, g_snapVectors.integer );
 		t->s.number = number;
 		t->s.eType = ET_EVENTS + event;
 		t->s.eFlags |= EF_PLAYER_EVENT;
@@ -951,7 +951,7 @@ void ClientThink_real( gentity_t *ent ) {
 		ent->eventTime = level.time;
 	}
 
-	BG_PlayerStateToEntityState( &ent->client->ps, &ent->s, qtrue );
+	BG_PlayerStateToEntityState( &ent->client->ps, &ent->s, g_snapVectors.integer );
 
 	SendPendingPredictableEvents( &ent->client->ps );
 
@@ -1186,7 +1186,7 @@ void ClientEndFrame( gentity_t *ent ) {
 	G_SetClientSound( ent );
 
 	// set the latest info
-	BG_PlayerStateToEntityState( &client->ps, &ent->s, qtrue );
+	BG_PlayerStateToEntityState( &client->ps, &ent->s, g_snapVectors.integer );
 
 	SendPendingPredictableEvents( &client->ps );
 
@@ -1224,7 +1224,10 @@ void ClientEndFrame( gentity_t *ent ) {
 
 	if ( frames > 0 && g_smoothClients.integer ) {
 		G_PredictPlayerMove( ent, (float)frames / sv_fps.value );
-		SnapVector( ent->s.pos.trBase );
+
+		if ( g_snapVectors.integer == 1 ) {
+			SnapVector( ent->s.pos.trBase );
+		}
 	}
 
 	// unlagged

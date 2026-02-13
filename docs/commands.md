@@ -84,6 +84,13 @@ Rocket's splash radius. Default is same as vanilla Quake 3.
 Coefficient for knockback that projectile gets from explosions. Zero is treated as no knockback
 ( vanilla behaviour )
 
+### g_snapVectors
+
+> Default: 0
+
+Controls quake vector snapping. When 1, all vectors are "snapped", or, simply speaking, they loose accuracy
+to save bandwith. Turning this off may help LG and RG.
+
 ---
 
 ## Spawning conditions

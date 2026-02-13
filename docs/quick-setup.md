@@ -38,6 +38,9 @@ set g_frozenLateJoin 1
 // Only for fun setting
 set g_killerGhost 0
 
+// Provides higher accuracy for lg and rg beams
+set g_snapVectors 0
+
 // Frozen players will automatically unfreeze after 4 minutes
 set g_unfreezeTime 240
 

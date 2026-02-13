@@ -1357,14 +1357,14 @@ void ClientSpawn(gentity_t *ent) {
 	client->pers.cmd.serverTime = level.time;
 	ClientThink( ent-g_entities );
 
-	BG_PlayerStateToEntityState( &client->ps, &ent->s, qtrue );
+	BG_PlayerStateToEntityState( &client->ps, &ent->s, g_snapVectors.integer );
 	VectorCopy( client->ps.origin, ent->r.currentOrigin );
 
 	// run the presend to set anything else
 	ClientEndFrame( ent );
 
 	// clear entity state values
-	BG_PlayerStateToEntityState( &client->ps, &ent->s, qtrue );
+	BG_PlayerStateToEntityState( &client->ps, &ent->s, g_snapVectors.integer );
 }
 
 

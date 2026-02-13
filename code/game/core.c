@@ -924,7 +924,7 @@ void phy_reset(void) {
   phy_water_scale            = pm_swimScale;
   phy_water_friction         = pm_waterfriction;
   // q3 math quirks
-  phy_snapvelocity           = qtrue;
+  phy_snapvelocity           = qfalse;
   phy_input_scalefix         = qfalse;
   overbounce_scale           = OVERCLIP;
   // Slidemove 

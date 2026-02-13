@@ -40,7 +40,7 @@ void cpm_init(){
   phy_water_scale         = pm_swimScale;
   phy_water_friction      = 0.5;
   // New
-  phy_snapvelocity        = qtrue;
+  phy_snapvelocity        = g_snapVectors.integer;
   phy_input_scalefix      = qfalse;
   phy_ground_basespeed    = 320;
   phy_ground_accel        = 15;
@@ -82,7 +82,7 @@ void vq3_init(){
   phy_water_scale        = pm_swimScale;
   phy_water_friction     = pm_waterfriction;
   // New
-  phy_snapvelocity       = qtrue;
+  phy_snapvelocity       = g_snapVectors.integer;
   phy_input_scalefix     = qfalse;
   phy_aircontrol         = qfalse;
   phy_jump_type          = VQ3;
@@ -107,7 +107,7 @@ void cq3_init(){
   phy_water_scale         = pm_swimScale;
   phy_water_friction      = 0.5;
   // Math quirks
-  phy_snapvelocity        = qtrue;
+  phy_snapvelocity        = g_snapVectors.integer;
   phy_input_scalefix      = qfalse;
   // Ground movement
   phy_ground_basespeed    = 320;
