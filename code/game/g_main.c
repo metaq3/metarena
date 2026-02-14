@@ -1600,6 +1600,14 @@ static void ClearBodyQue( void ) {
 			ent->physicsObject = qfalse;
 		}
 	}
+
+	for ( i = 0 ; i < GHOST_QUEUE_SIZE ; i++ ) {
+		ent = level.ghostQue[ i ];
+		if ( ent->r.linked || ent->physicsObject ) {
+			trap_UnlinkEntity( ent );
+			ent->physicsObject = qfalse;
+		}
+	}
 }
 
 

@@ -308,6 +308,7 @@ typedef enum {
 #define EF_AWARD_DENIED 0x00040000     // denied
 #define EF_TEAMVOTED 0x00080000        // already cast a team vote
 #define EF_KNOCKBACK 0x00100000        // only knockback
+#define EF_GHOST 0x00200000            // killer ghost
 
 #define EF_PERSISTANT (EF_CONNECTION | EF_VOTED | EF_TEAMVOTED)
 #define EF_AWARDS                                                              \

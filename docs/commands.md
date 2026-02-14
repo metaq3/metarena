@@ -225,6 +225,15 @@ How long ( in seconds ) can players stay freezed without help of their teammates
 
 ---
 
+### g_killerGhost
+
+> Default: 0
+
+When on, a "ghost" is left behind the player, who just got the frag. It will stand for some long time and then
+evade.
+
+---
+
 ### g_maxPacketsLowerBound
 
 > Default: 125

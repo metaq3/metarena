@@ -37,6 +37,7 @@ G_CVAR(g_unlagWeaponSync, "g_unlagWeaponSync", "1", CVAR_ARCHIVE, 0, qfalse,
        qfalse)
 G_CVAR(g_maxPredictionNudge, "g_maxPredictionNudge", "200", CVAR_ARCHIVE, 0,
        qfalse, qfalse)
+G_CVAR(g_killerGhost, "g_killerGhost", "0", CVAR_ARCHIVE, 0, qfalse, qfalse)
 G_CVAR(g_unfreezeTime, "g_unfreezeTime", "240", CVAR_ARCHIVE, 0, qfalse, qfalse)
 G_CVAR(g_ctfUnfreezeTime, "g_ctfUnfreezeTime", "2000", CVAR_ARCHIVE, 0, qfalse,
        qfalse)

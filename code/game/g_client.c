@@ -276,11 +276,21 @@ void InitBodyQue (void) {
 	gentity_t	*ent;
 
 	level.bodyQueIndex = 0;
-	for (i=0; i<BODY_QUEUE_SIZE ; i++) {
+
+	for ( i = 0; i < BODY_QUEUE_SIZE; i++ ) {
 		ent = G_Spawn();
 		ent->classname = "bodyque";
 		ent->neverFree = qtrue;
 		level.bodyQue[i] = ent;
+	}
+
+	level.ghostQueIndex = 0;
+
+	for ( i = 0; i < GHOST_QUEUE_SIZE; i++ ) {
+		ent = G_Spawn();
+		ent->classname = "bodyque";
+		ent->neverFree = qtrue;
+		level.ghostQue[i] = ent;
 	}
 }
 
@@ -302,6 +312,60 @@ void BodySink( gentity_t *ent ) {
 	ent->s.pos.trBase[2] -= 1;
 }
 
+/*
+=============
+CopyToBodyGhost
+
+An attacker killed someone, so leave his ghost behind
+=============
+*/
+void CopyToBodyGhost( gentity_t *ent ) {
+	gentity_t		*body;
+
+	if ( !g_killerGhost.integer ) {
+		return;
+	}
+
+	// grab a body que and cycle to the next one
+	body = level.ghostQue[ level.ghostQueIndex ];
+	level.ghostQueIndex = (level.ghostQueIndex + 1) % GHOST_QUEUE_SIZE;
+
+	trap_UnlinkEntity (body);
+
+	body->s = ent->s;
+	body->s.weapon = 0;
+	body->health = GIB_HEALTH;
+	body->noise_index = 0;
+	body->s.eFlags = EF_GHOST;		// clear EF_TALK, etc
+	body->s.powerups = (1 << PW_QUAD) | (1 << PW_INVIS);
+	body->s.loopSound = 0;	// clear lava burning
+	body->s.number = body - g_entities;
+	body->timestamp = level.time;
+	body->physicsObject = qfalse; // don't move
+	body->physicsBounce = 0;		// don't bounce
+  body->s.pos.trType = TR_STATIONARY;
+	body->s.event = 0;
+
+	body->r.svFlags = ent->r.svFlags;
+	VectorCopy (ent->r.mins, body->r.mins);
+	VectorCopy (ent->r.maxs, body->r.maxs);
+	VectorCopy (ent->r.absmin, body->r.absmin);
+	VectorCopy (ent->r.absmax, body->r.absmax);
+
+	body->clipmask = CONTENTS_SOLID | CONTENTS_PLAYERCLIP;
+	body->r.contents = CONTENTS_TRANSLUCENT;
+	body->r.ownerNum = ent->s.number;
+
+	body->nextthink = level.time + 40000;
+	body->think = BodySink;
+
+	body->die = body_die;
+	body->takedamage = qfalse;
+
+	VectorCopy ( body->s.pos.trBase, body->r.currentOrigin );
+	VectorCopy ( body->s.pos.trBase, body->s.origin );
+	trap_LinkEntity( body );
+}
 
 /*
 =============

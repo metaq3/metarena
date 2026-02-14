@@ -12,6 +12,7 @@
 #define GAMEVERSION "osp"
 
 #define BODY_QUEUE_SIZE 8
+#define GHOST_QUEUE_SIZE 32
 
 #define INFINITE 1000000
 
@@ -496,6 +497,10 @@ typedef struct {
   // unlagged
   int frameStartTime;
 
+  // metarena
+  gentity_t *ghostQue[GHOST_QUEUE_SIZE];
+  int ghostQueIndex;
+
 } level_locals_t;
 
 //
@@ -671,6 +676,7 @@ void SetClientViewAngle(gentity_t *ent, vec3_t angle);
 gentity_t *SelectSpawnPoint(gentity_t *ent, vec3_t avoidPoint, vec3_t origin,
                             vec3_t angles);
 void CopyToBodyQue(gentity_t *ent);
+void CopyToBodyGhost(gentity_t *ent);
 void respawn(gentity_t *ent);
 void BeginIntermission(void);
 void InitBodyQue(void);

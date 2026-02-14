@@ -588,6 +588,10 @@ void player_freeze( gentity_t *self, gentity_t *attacker, int mod ) {
 	if ( self != attacker && OnSameTeam( self, attacker ) ) {
 		return;
 	}
+
+	// Leave attacker's ghost behind
+	CopyToBodyGhost(attacker);
+
 	if ( self != attacker && g_gametype.integer == GT_CTF && redflag && blueflag ) {
 		vec3_t	dist1, dist2;
 
@@ -702,6 +706,18 @@ void team_wins( int team ) {
 	gentity_t	*te;
 
 	spawnPoint = SelectRandomDeathmatchSpawnPoint();
+
+	// Remove all killer ghosts
+	for ( i = 0; i < GHOST_QUEUE_SIZE; i++ ) {
+		e = level.ghostQue[i];
+
+		if ( !e->inuse ) continue;
+		if ( !(e->s.eFlags & EF_GHOST) ) continue;
+
+		// Don't remove it immediately, but sank it
+		e->nextthink = level.time;
+	}
+
 	for ( i = 0; i < g_maxclients.integer; i++ ) {
 		e = g_entities + i;
 		cl = e->client;

@@ -30,6 +30,9 @@ set phy_rocket_splashRadius 120
 // Players joining match mid-game will spawn frozen
 set g_frozenLateJoin 1
 
+// Only for fun setting
+set g_killerGhost 0
+
 // Frozen players will automatically unfreeze after 4 minutes
 set g_unfreezeTime 240
 
