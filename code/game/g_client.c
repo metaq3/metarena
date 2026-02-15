@@ -1032,6 +1032,15 @@ void ClientBegin( int clientNum ) {
 	ent->pain = 0;
 	ent->client = client;
 
+	// This line is important. Here's why:
+	// If a player got frozen during the game, and they decide to
+	// change to spectators and then return back to their team with
+	// g_frozenLateJoin = 0, then a "ghost" will spawn: player sees
+	// their hp/armor, but can't pickup anything, and team overlay
+	// shows them as dead.
+	// Issue is solved by reseting freezeState flag.
+	ent->freezeState = qfalse;
+
 	if ( client->pers.connected == CON_DISCONNECTED )
 		return;
 
@@ -1053,10 +1062,6 @@ void ClientBegin( int clientNum ) {
 	// locate ent at a spawn point
 	ClientSpawn( ent );
 
-	if (g_frozenlatejoin.integer && client->pers.enterTime > level.startTime) {
-		player_freeze( ent, &g_entities[ENTITYNUM_WORLD], MOD_RAILGUN );
-	}
-
 	if ( !client->pers.inGame ) {
 		BroadcastTeamChange( client, -1 );
 		if ( client->sess.sessionTeam == TEAM_RED || client->sess.sessionTeam == TEAM_BLUE )
@@ -1073,6 +1078,8 @@ void ClientBegin( int clientNum ) {
 		if ( g_gametype.integer != GT_TOURNAMENT && !client->pers.inGame ) {
 			G_BroadcastServerCommand( -1, va("print \"^B%s" S_COLOR_WHITE " also wants to participate!\n\"", client->pers.netname) );
 		}
+	} else if (g_frozenlatejoin.integer && client->pers.enterTime > level.startTime) {
+		player_freeze( ent, &g_entities[ENTITYNUM_WORLD], MOD_RAILGUN );
 	}
 	
 	client->pers.inGame = qtrue;

@@ -578,6 +578,8 @@ qboolean SetTeam( gentity_t *ent, const char *s ) {
 	int					specClient;
 	int					teamLeader;
 	qboolean			checkTeamLeader;
+	int			i;
+	gentity_t 		*body;
 
 	//
 	// see what change is requested
@@ -729,6 +731,15 @@ qboolean SetTeam( gentity_t *ent, const char *s ) {
 	G_WriteClientSessionData( client );
 
 	BroadcastTeamChange( client, oldTeam );
+
+	// Clear previous frozen body
+	body = ent->target_ent;
+
+	if (body && body->inuse && !Q_stricmp( body->classname, "freezebody" ) && body->target_ent == ent ) {
+		trap_UnlinkEntity( body );
+
+		G_FreeEntity( body );
+	}
 
 	// get and distribute relevent paramters
 	ClientUserinfoChanged( clientNum );
