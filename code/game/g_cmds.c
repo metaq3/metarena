@@ -578,7 +578,6 @@ qboolean SetTeam( gentity_t *ent, const char *s ) {
 	int					specClient;
 	int					teamLeader;
 	qboolean			checkTeamLeader;
-	int			i;
 	gentity_t 		*body;
 
 	//
