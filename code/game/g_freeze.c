@@ -398,8 +398,10 @@ qboolean DamageBody( gentity_t *targ, gentity_t *attacker, vec3_t dir, int mod, 
 	if ( attacker->client && targ->freezeState ) {
 		if ( knockback ) {
 			VectorScale( dir, g_knockback.value * (float) knockback / mass, kvel );
-			if ( mass == 100 ) kvel[ 2 ] += 24;
+			kvel[ 2 ] += 24;
 			VectorAdd( targ->s.pos.trDelta, kvel, targ->s.pos.trDelta );
+
+			VectorCopy( targ->r.currentOrigin, targ->s.pos.trBase );
 
 			targ->s.pos.trType = TR_GRAVITY;
 			targ->s.pos.trTime = level.time;
