@@ -70,6 +70,8 @@ G_CVAR(be_disabledFeatures, "be_disabledFeatures", "0", CVAR_ARCHIVE, 0, qfalse,
 G_CVAR(phy_knockback, "phy_knockback", "1000", 0, 0, qtrue, qfalse)
 // New variables
 G_CVAR(phy_movetype, "phy_movetype", "0", CVAR_SYSTEMINFO, 0, qtrue, qfalse)
+G_CVAR(g_fixedPmoveMsec, "g_fixedPmoveMsec", "0", CVAR_ARCHIVE, 0, qfalse,
+       qfalse)
 G_CVAR(g_startArmor, "g_startArmor", "100", CVAR_ARCHIVE, 0, qtrue, qfalse)
 G_CVAR(g_grapple, "g_grapple", "0", CVAR_ARCHIVE, 0, qtrue, qfalse)
 G_CVAR(g_lgDamage, "g_lgDamage", "7", CVAR_ARCHIVE, 0, qtrue, qfalse)
