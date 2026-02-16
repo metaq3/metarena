@@ -1006,7 +1006,7 @@ void ClientThink_real( gentity_t *ent ) {
 				respawn( ent );
 				return;
 			}
-		
+
 			// pressing attack or use is the normal respawn method
 			if ( ucmd->buttons & ( BUTTON_ATTACK | BUTTON_USE_HOLDABLE ) ) {
 				respawn( ent );

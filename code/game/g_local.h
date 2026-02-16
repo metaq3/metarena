@@ -284,6 +284,11 @@ typedef struct {
 
   int stats[OSP_STATS_NUM + WP_MAX_WEAPONS];
   accuracy_t accuracies[WP_MAX_WEAPONS];
+
+  // [meta]:
+  // Untill pers.respawnPenalty > level.time, client's body will not unfreeze.
+  // Used when dying from lava, falling into the void, etc.
+  int respawnPenalty;
 } clientPersistant_t;
 
 // unlagged

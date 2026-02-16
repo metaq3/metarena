@@ -1,5 +1,6 @@
 #include "bg_public.h"
 #include "g_local.h"
+#include "q_shared.h"
 
 int	check_time;
 static vec3_t	redflag;
@@ -343,8 +344,21 @@ static void Body_think( gentity_t *self ) {
 
 static void Body_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod ) {
 	gentity_t	*tent;
+	gclient_t *target_client = NULL;
 
 	if ( self->health > GIB_HEALTH ) {
+		return;
+	}
+
+	if ( self->target_ent ) {
+		target_client = self->target_ent->client;
+	}
+
+	// Restrict respawning before some time ( usually end of the penalty )
+	if (
+		self->freezeState && target_client &&
+		target_client->pers.respawnPenalty > level.time
+	) {
 		return;
 	}
 
