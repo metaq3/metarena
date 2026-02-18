@@ -312,6 +312,16 @@ static void Body_think( gentity_t *self ) {
 		Body_free( self );
 		return;
 	}
+
+	// Remove this body if player changed the team or another body has appeared in the world
+	if ( self->target_ent->client->sess.sessionTeam != self->spawnflags || self->target_ent->target_ent != self ) {
+		// Prevents freeing the player ( we just want to remove body )
+		self->freezeState = qfalse;
+
+		Body_free( self );
+		return;
+	}
+
 	if ( level.intermissiontime || level.intermissionQueued ) {
 		return;
 	}
