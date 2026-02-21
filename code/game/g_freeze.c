@@ -183,7 +183,7 @@ static void Body_Explode( gentity_t *self ) {
 			AddScore( e, self->s.pos.trBase, 1 );
 
 			e->client->sess.wins++;
-			G_Damage( self, NULL, NULL, NULL, NULL, 100000, DAMAGE_NO_PROTECTION, MOD_TELEFRAG );
+			G_Damage( self, e, NULL, NULL, NULL, 100000, DAMAGE_NO_PROTECTION, MOD_TELEFRAG );
 		}
 		return;
 	}
@@ -354,10 +354,12 @@ static void Body_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker
 		target_client = self->target_ent->client;
 	}
 
-	// Restrict respawning before some time ( usually end of the penalty )
+	// Restrict respawning before some time ( usually end of the penalty ), but not
+	// for the case, when teammate unfreezes you ( inflictor->client != NULL marks that )
 	if (
 		self->freezeState && target_client &&
-		target_client->pers.respawnPenalty > level.time
+		target_client->pers.respawnPenalty > level.time &&
+		inflictor->client == NULL
 	) {
 		return;
 	}
