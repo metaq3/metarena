@@ -626,10 +626,6 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 			self->client->pers.respawnPenalty += g_lavaRespawnTime.value * 1000.f;
 			break;
 		}
-		case MOD_TELEFRAG: {
-			self->client->pers.respawnPenalty += g_telefragRespawnTime.value * 1000.f;
-			break;
-		}
 		case MOD_TRIGGER_HURT:
 		case MOD_SUICIDE: {
 			self->client->pers.respawnPenalty += g_suicideRespawnTime.value * 1000.f;

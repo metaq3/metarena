@@ -35,6 +35,11 @@ set g_plasmaKnockbackness 0
 // Players joining match mid-game will spawn frozen
 set g_frozenLateJoin 1
 
+// Give penalty to the players, so they don't abuse
+// suicide midfight
+set g_lavaRespawnTime 30
+set g_suicideRespawnTime 30
+
 // Only for fun setting
 set g_killerGhost 0
 

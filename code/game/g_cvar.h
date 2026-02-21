@@ -68,8 +68,6 @@ G_CVAR(g_lavaRespawnTime, "g_lavaRespawnTime", "30", CVAR_ARCHIVE, 0, qfalse,
        qfalse)
 G_CVAR(g_suicideRespawnTime, "g_suicideRespawnTime", "30", CVAR_ARCHIVE, 0,
        qfalse, qfalse)
-G_CVAR(g_telefragRespawnTime, "g_telefragRespawnTime", "15", CVAR_ARCHIVE, 0,
-       qfalse, qfalse)
 G_CVAR(be_disabledFeatures, "be_disabledFeatures", "0", CVAR_ARCHIVE, 0, qfalse,
        qfalse)
 //::OSDF modded
