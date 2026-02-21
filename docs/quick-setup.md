@@ -37,8 +37,8 @@ set g_frozenLateJoin 1
 
 // Give penalty to the players, so they don't abuse
 // suicide midfight
-set g_lavaRespawnTime 30
-set g_suicideRespawnTime 30
+set g_lavaRespawnTime 10
+set g_suicideRespawnTime 15
 
 // Only for fun setting
 set g_killerGhost 0

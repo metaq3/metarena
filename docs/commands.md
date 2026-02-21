@@ -136,11 +136,11 @@ OSP Freeze.
 
 ### g_lavaRespawnTime
 
-> Default: 30
+> Default: 10
 
 ### g_suicideRespawnTime
 
-> Default: 30
+> Default: 15
 
 _In seconds ( fractional values supported )._
 
