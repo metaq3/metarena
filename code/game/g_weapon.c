@@ -1,4 +1,26 @@
-// Copyright (C) 1999-2000 Id Software, Inc.
+/*
+===========================================================================
+Copyright (C) 1999-2005 Id Software, Inc.
+Some portions Copyright (C) 2006 Neil Toronto.
+
+This file is part of Unlagged and Quake III Arena source code.
+
+Unlagged and Quake III Arena source code is free software; you can
+redistribute it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either version 2 of
+the License, or (at your option) any later version.
+
+Unlagged and Quake III Arena source code is distributed in the hope that it
+will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Unlagged and Quake III Arena source code; if not, write to the
+Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+02110-1301  USA
+===========================================================================
+*/
 //
 // g_weapon.c 
 // perform the server side effects of a weapon firing
@@ -136,34 +158,6 @@ MACHINEGUN
 ======================================================================
 */
 
-/*
-======================
-SnapVectorTowards
-
-Round a vector to integers for more efficient network
-transmission, but make sure that it rounds towards a given point
-rather than blindly truncating.  This prevents it from truncating 
-into a wall.
-======================
-*/
-void SnapVectorTowards( vec3_t v, vec3_t to ) {
-	int		i;
-
-	for ( i = 0 ; i < 3 ; i++ ) {
-		if ( v[i] < 0 ) {
-			if ( to[i] >= v[i])
-			v[i] = (int)v[i];
-			else
-				v[i] = (int)v[i] - 1;
-		} else {
-			if ( to[i] <= v[i] )
-				v[i] = (int)v[i];
-			else
-			v[i] = (int)v[i] + 1;
-		}
-	}
-}
-
 #ifdef MISSIONPACK
 #define CHAINGUN_SPREAD		600
 #endif
@@ -183,11 +177,24 @@ static void Bullet_Fire( gentity_t *ent, float spread, int damage ) {
 	gentity_t	*traceEnt;
 	int			i, passent;
 
+//unlagged - attack prediction #2
+	// we have to use something now that the client knows in advance
+	int			seed = ent->client->attackTime % 256;
+//unlagged - attack prediction #2
+
 	damage *= s_quadFactor;
 
+//unlagged - attack prediction #2
+	// this has to match what's on the client
+/*
 	r = random() * M_PI * 2.0f;
 	u = sin(r) * crandom() * spread * 16;
 	r = cos(r) * crandom() * spread * 16;
+*/
+	r = Q_random(&seed) * M_PI * 2.0f;
+	u = sin(r) * Q_crandom(&seed) * spread * 16;
+	r = cos(r) * Q_crandom(&seed) * spread * 16;
+//unlagged - attack prediction #2
 
 	VectorMA( muzzle_origin, ( 8192.0 * 16.0 ), forward, end );
 	VectorMA( end, r, right, end );
@@ -196,13 +203,17 @@ static void Bullet_Fire( gentity_t *ent, float spread, int damage ) {
 	passent = ent->s.number;
 	for ( i = 0; i < 10; i++ ) {
 
-		// unlagged
+//unlagged - backward reconciliation #2
+		// backward-reconcile the other clients
 		G_DoTimeShiftFor( ent );
+//unlagged - backward reconciliation #2
 
 		trap_Trace( &tr, muzzle_origin, NULL, NULL, end, passent, MASK_SHOT );
 
-		// unlagged
+//unlagged - backward reconciliation #2
+		// put them back
 		G_UndoTimeShiftFor( ent );
+//unlagged - backward reconciliation #2
 
 		if ( tr.surfaceFlags & SURF_NOIMPACT )
 			return;
@@ -217,9 +228,6 @@ static void Bullet_Fire( gentity_t *ent, float spread, int damage ) {
 			tent = G_TempEntity( tr.endpos, EV_BULLET_HIT_FLESH );
 			tent->s.eventParm = traceEnt->s.number;
 
-			// unlagged
-			tent->s.clientNum = ent->s.clientNum;
-
 			if( LogAccuracyHit( traceEnt, ent ) ) {
 				ent->client->accuracy_hits++;
 			}
@@ -232,6 +240,13 @@ static void Bullet_Fire( gentity_t *ent, float spread, int damage ) {
 			tent = G_TempEntity( tr.endpos, EV_BULLET_HIT_WALL );
 			tent->s.eventParm = DirToByte( tr.plane.normal );
 		}
+
+//unlagged - attack prediction #2
+		// we need the client number to determine whether or not to
+		// suppress this event
+		tent->s.clientNum = ent->s.clientNum;
+//unlagged - attack prediction #2
+
 		tent->s.otherEntityNum = ent->s.number;
 
 		if ( traceEnt->takedamage ) {
@@ -359,8 +374,10 @@ static void ShotgunPattern( const vec3_t origin, const vec3_t origin2, int seed,
 	PerpendicularVector( right, forward );
 	CrossProduct( forward, right, up );
 
-	// unlagged
+//unlagged - backward reconciliation #2
+	// backward-reconcile the other clients
 	G_DoTimeShiftFor( ent );
+//unlagged - backward reconciliation #2
 
 	// generate the "random" spread pattern
 	for ( i = 0 ; i < DEFAULT_SHOTGUN_COUNT ; i++ ) {
@@ -375,8 +392,10 @@ static void ShotgunPattern( const vec3_t origin, const vec3_t origin2, int seed,
 		}
 	}
 
-	// unlagged
+//unlagged - backward reconciliation #2
+	// put them back
 	G_UndoTimeShiftFor( ent );
+//unlagged - backward reconciliation #2
 }
 
 
@@ -388,7 +407,11 @@ static void weapon_supershotgun_fire( gentity_t *ent ) {
 	VectorScale( forward, 4096.0, tent->s.origin2 );
 
 	SnapVector( tent->s.origin2 );
-	tent->s.eventParm = rand() & 255;		// seed for spread pattern
+//unlagged - attack prediction #2
+	// this has to be something the client can predict now
+	//tent->s.eventParm = rand() & 255;		// seed for spread pattern
+	tent->s.eventParm = ent->client->attackTime % 256; // seed for spread pattern
+//unlagged - attack prediction #2
 	tent->s.otherEntityNum = ent->s.number;
 
 	ShotgunPattern( muzzle_origin, tent->s.origin2, tent->s.eventParm, ent );
@@ -497,8 +520,10 @@ void weapon_railgun_fire( gentity_t *ent ) {
 
 	VectorMA( muzzle_origin, 8192.0, forward, end );
 
-	// unlagged
+//unlagged - backward reconciliation #2
+	// backward-reconcile the other clients
 	G_DoTimeShiftFor( ent );
+//unlagged - backward reconciliation #2
 
 	// trace only against the solids, so the railgun will go through people
 	unlinked = 0;
@@ -550,9 +575,10 @@ void weapon_railgun_fire( gentity_t *ent ) {
 		unlinked++;
 	} while ( unlinked < MAX_RAIL_HITS );
 
-	// unlagged
+//unlagged - backward reconciliation #2
+	// put them back
 	G_UndoTimeShiftFor( ent );
-
+//unlagged - backward reconciliation #2
 
 	// link back in any entities we unlinked
 	for ( i = 0 ; i < unlinked ; i++ ) {
@@ -679,13 +705,17 @@ void Weapon_LightningFire( gentity_t *ent ) {
 	for (i = 0; i < 10; i++) {
 		VectorMA( muzzle_origin, LIGHTNING_RANGE, forward, end );
 
-		// unlagged
+//unlagged - backward reconciliation #2
+		// backward-reconcile the other clients
 		G_DoTimeShiftFor( ent );
+//unlagged - backward reconciliation #2
 
 		trap_Trace( &tr, muzzle_origin, NULL, NULL, end, passent, MASK_SHOT );
 
-		// unlagged
+//unlagged - backward reconciliation #2
+		// put them back
 		G_UndoTimeShiftFor( ent );
+//unlagged - backward reconciliation #2
 
 #ifdef MISSIONPACK
 		// if not the first trace (the lightning bounced of an invulnerability sphere)

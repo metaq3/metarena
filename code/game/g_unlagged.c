@@ -1,7 +1,25 @@
-//
-// Based on Neil Toronto's code.
-//
+/*
+===========================================================================
+Copyright (C) 2006 Neil Toronto.
 
+This file is part of the Unlagged source code.
+
+Unlagged source code is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or (at your
+option) any later version.
+
+Unlagged source code is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with Unlagged source code; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+===========================================================================
+*/
+//
 #include "g_local.h"
 
 /*
@@ -38,9 +56,7 @@ Keep track of where the client's been
 */
 void G_StoreHistory( gentity_t *ent ) {
 	int		head;
-	gclient_t	*client;
-
-	client = ent->client;
+	gclient_t *client = ent->client;
 
 	client->historyHead++;
 	if ( client->historyHead >= NUM_CLIENT_HISTORY ) {
@@ -54,6 +70,10 @@ void G_StoreHistory( gentity_t *ent ) {
 	VectorCopy( ent->r.maxs, client->history[head].maxs );
 	VectorCopy( ent->s.pos.trBase, client->history[head].currentOrigin );
 	client->history[head].leveltime = level.time;
+
+	if ( g_snapVectors.integer ) {
+		SnapVector( client->history[head].currentOrigin );
+	}
 }
 
 
@@ -81,11 +101,10 @@ Move a client back to where he was at the specified "time"
 */
 void G_TimeShiftClient( gentity_t *ent, int time, qboolean debug, gentity_t *debugger ) {
 	int		j, k;
-	gclient_t	*client;
+	gclient_t	*client = ent->client;
 
 	// find two entries in the history whose times sandwich "time"
 	// assumes no two adjacent records have the same timestamp
-	client = ent->client;
 	j = k = client->historyHead;
 	do {
 		if ( client->history[j].leveltime <= time )
@@ -117,12 +136,18 @@ void G_TimeShiftClient( gentity_t *ent, int time, qboolean debug, gentity_t *deb
 				(float)(client->history[k].leveltime - client->history[j].leveltime);
 
 			// interpolate between the two origins to give position at time index "time"
-			TimeShiftLerp( frac, client->history[j].currentOrigin, client->history[k].currentOrigin, ent->r.currentOrigin );
+			TimeShiftLerp( frac,
+				client->history[j].currentOrigin, client->history[k].currentOrigin,
+				ent->r.currentOrigin );
 
 			// lerp these too, just for fun (and ducking)
-			TimeShiftLerp( frac, client->history[j].mins, client->history[k].mins, ent->r.mins );
+			TimeShiftLerp( frac,
+				client->history[j].mins, client->history[k].mins,
+				ent->r.mins );
 
-			TimeShiftLerp( frac, client->history[j].maxs, client->history[k].maxs,ent->r.maxs );
+			TimeShiftLerp( frac,
+				client->history[j].maxs, client->history[k].maxs,
+				ent->r.maxs );
 
 			// this will recalculate absmin and absmax
 			trap_LinkEntity( ent );
@@ -143,26 +168,20 @@ void G_TimeShiftClient( gentity_t *ent, int time, qboolean debug, gentity_t *deb
 =====================
 G_TimeShiftAllClients
 
-Move ALL clients back to where they were at the specified "ltime",
+Move ALL clients back to where they were at the specified "time",
 except for "skip"
 =====================
 */
-void G_TimeShiftAllClients( int ltime, gentity_t *skip ) {
+void G_TimeShiftAllClients( int time, gentity_t *skip ) {
 	int			i;
 	gentity_t	*ent;
 
 	// for every client
 	ent = &g_entities[0];
-	for ( i = 0; i < level.maxclients; i++, ent++ ) 
-	{
-		if ( ent == skip )
-			continue;
-
-		if ( !ent->r.linked )
-			continue;
-
-		if ( ent->client && ent->inuse && ent->client->sess.sessionTeam < TEAM_SPECTATOR ) 
-			G_TimeShiftClient( ent, ltime, qfalse, skip );
+	for ( i = 0; i < MAX_CLIENTS; i++, ent++ ) {
+		if ( ent->client && ent->inuse && ent->client->sess.sessionTeam < TEAM_SPECTATOR && ent != skip ) {
+			G_TimeShiftClient( ent, time, qfalse, skip );
+		}
 	}
 }
 
@@ -175,6 +194,12 @@ Decide what time to shift everyone back to, and do it
 ================
 */
 void G_DoTimeShiftFor( gentity_t *ent ) {	
+#ifndef MISSIONPACK
+	int wpflags[WP_NUM_WEAPONS] = { 0, 0, 2, 4, 0, 0, 8, 16, 0, 0, 0 };
+#else
+	int wpflags[WP_NUM_WEAPONS] = { 0, 0, 2, 4, 0, 0, 8, 16, 0, 0, 0, 32, 0, 64 };
+#endif
+	int wpflag = wpflags[ent->client->ps.weapon];
 	int time;
 
 	// don't time shift for mistakes or bots
@@ -183,11 +208,12 @@ void G_DoTimeShiftFor( gentity_t *ent ) {
 	}
 
 	// if it's enabled server-side and the client wants it or wants it for this weapon
-	if ( g_unlagged.integer ) {
-		// full lag compensation
-		time = ent->client->lastCmdTime;
-	} else {
-		// server frame lag compensation
+	if ( g_unlagged.integer && ( ent->client->pers.delag & 1 || ent->client->pers.delag & wpflag ) ) {
+		// do the full lag compensation, except what the client nudges
+		time = ent->client->attackTime + ent->client->pers.cmdTimeNudge;
+	}
+	else {
+		// do just 50ms
 		time = level.previousTime + ent->client->frameOffset;
 	}
 
@@ -225,27 +251,14 @@ Move ALL the clients back to where they were before the time shift,
 except for "skip"
 =======================
 */
-void G_UnTimeShiftAllClients( gentity_t *skip ) 
-{
-	int		i;
+void G_UnTimeShiftAllClients( gentity_t *skip ) {
+	int			i;
 	gentity_t	*ent;
-	qboolean	linked;
 
 	ent = &g_entities[0];
-	for ( i = 0; i < level.maxclients; i++, ent++ ) 
-	{
-		if ( ent == skip )
-			continue;
-
-		linked = ent->r.linked;
-
-		if ( ent->client && ent->inuse && ent->client->sess.sessionTeam < TEAM_SPECTATOR ) 
-		{
+	for ( i = 0; i < MAX_CLIENTS; i++, ent++) {
+		if ( ent->client && ent->inuse && ent->client->sess.sessionTeam < TEAM_SPECTATOR && ent != skip ) {
 			G_UnTimeShiftClient( ent );
-			if ( !linked ) 
-			{
-				trap_UnlinkEntity( ent );
-			}
 		}
 	}
 }
@@ -472,25 +485,20 @@ Advance the given entity frametime seconds, stepping and sliding as appropriate
 ============================
 */
 void G_PredictPlayerStepSlideMove( gentity_t *ent, float frametime ) {
-	vec3_t start_o, start_v;
-	//vec3_t down_o, down_v;
+	vec3_t start_o, start_v, down_o, down_v;
 	vec3_t down, up;
 	trace_t trace;
 	float stepSize;
 
-	VectorCopy( ent->s.pos.trBase, start_o );
-	VectorCopy( ent->s.pos.trDelta, start_v );
+	VectorCopy (ent->s.pos.trBase, start_o);
+	VectorCopy (ent->s.pos.trDelta, start_v);
 
 	if ( !G_PredictPlayerSlideMove( ent, frametime ) ) {
 		// not clipped, so forget stepping
 		return;
 	}
 
-	//VectorCopy( ent->s.pos.trBase, down_o );
-	//VectorCopy( ent->s.pos.trDelta, down_v );
-
-	VectorCopy( start_o, up );
-
+	VectorCopy (start_o, up);
 	up[2] += PM_STEP_HEIGHT;
 
 	// test the player position if they were a stepheight higher
