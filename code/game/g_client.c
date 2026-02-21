@@ -1058,6 +1058,7 @@ void ClientBegin( int clientNum ) {
 	memset( &client->ps, 0, sizeof( client->ps ) );
 	client->ps.eFlags = flags;
 	client->ps.persistant[PERS_SPAWN_COUNT] = spawns;
+	client->pers.respawnPenalty = 0;
 
 	// locate ent at a spawn point
 	ClientSpawn( ent );
@@ -1316,6 +1317,7 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.pm_time = 100;
 
 	client->respawnTime = level.time;
+
 	client->inactivityTime = level.time + g_inactivity.integer * 1000;
 	client->latched_buttons = 0;
 

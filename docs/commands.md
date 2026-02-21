@@ -84,6 +84,8 @@ Rocket's splash radius. Default is same as vanilla Quake 3.
 Coefficient for knockback that projectile gets from explosions. Zero is treated as no knockback
 ( vanilla behaviour )
 
+---
+
 ### g_snapVectors
 
 > Default: 0
@@ -129,6 +131,32 @@ List of weapon values:
 
 When set to 1, players joining match mid-game will spawn frozen. From
 OSP Freeze.
+
+---
+
+### g_lavaRespawnTime
+
+> Default: 10
+
+### g_suicideRespawnTime
+
+> Default: 15
+
+_In seconds ( fractional values supported )._
+
+Players, who die through lava or suicide will get respawn penalty, making them unable
+to automatically unfreeze during that period. Used to avoid intentional suicide during
+midfight.
+
+> [!IMPORTANT]
+> Your teammates are still able to unfreeze you even
+> with penalty time. In that case, respawning is not
+> restricted.
+
+> [!NOTE]
+> Death because of `trigger_hurt` is considered a suicide.
+> Some maps can use it for custom lava, so beware
+> of that.
 
 ---
 

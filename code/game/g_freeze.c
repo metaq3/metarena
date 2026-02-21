@@ -1,5 +1,6 @@
 #include "bg_public.h"
 #include "g_local.h"
+#include "q_shared.h"
 
 int	check_time;
 static vec3_t	redflag;
@@ -182,7 +183,7 @@ static void Body_Explode( gentity_t *self ) {
 			AddScore( e, self->s.pos.trBase, 1 );
 
 			e->client->sess.wins++;
-			G_Damage( self, NULL, NULL, NULL, NULL, 100000, DAMAGE_NO_PROTECTION, MOD_TELEFRAG );
+			G_Damage( self, e, NULL, NULL, NULL, 100000, DAMAGE_NO_PROTECTION, MOD_TELEFRAG );
 		}
 		return;
 	}
@@ -353,8 +354,23 @@ static void Body_think( gentity_t *self ) {
 
 static void Body_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod ) {
 	gentity_t	*tent;
+	gclient_t *target_client = NULL;
 
 	if ( self->health > GIB_HEALTH ) {
+		return;
+	}
+
+	if ( self->target_ent ) {
+		target_client = self->target_ent->client;
+	}
+
+	// Restrict respawning before some time ( usually end of the penalty ), but not
+	// for the case, when teammate unfreezes you ( inflictor->client != NULL marks that )
+	if (
+		self->freezeState && target_client &&
+		target_client->pers.respawnPenalty > level.time &&
+		inflictor->client == NULL
+	) {
 		return;
 	}
 
@@ -408,8 +424,10 @@ qboolean DamageBody( gentity_t *targ, gentity_t *attacker, vec3_t dir, int mod, 
 	if ( attacker->client && targ->freezeState ) {
 		if ( knockback ) {
 			VectorScale( dir, g_knockback.value * (float) knockback / mass, kvel );
-			if ( mass == 100 ) kvel[ 2 ] += 24;
+			kvel[ 2 ] += 24;
 			VectorAdd( targ->s.pos.trDelta, kvel, targ->s.pos.trDelta );
+
+			VectorCopy( targ->r.currentOrigin, targ->s.pos.trBase );
 
 			targ->s.pos.trType = TR_GRAVITY;
 			targ->s.pos.trTime = level.time;

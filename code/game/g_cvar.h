@@ -64,6 +64,10 @@ G_CVAR(g_timeNudgeUpperBound, "g_timeNudgeUpperBound", "20", CVAR_ARCHIVE, 0,
 G_CVAR(g_allowPmove, "g_allowPmove", "0", CVAR_ARCHIVE, 0, qfalse, qfalse)
 G_CVAR(g_weaponMask, "g_weaponMask", "510", CVAR_ARCHIVE, 0, qfalse, qfalse)
 G_CVAR(g_snapVectors, "g_snapVectors", "0", CVAR_ARCHIVE, 0, qfalse, qfalse)
+G_CVAR(g_lavaRespawnTime, "g_lavaRespawnTime", "10", CVAR_ARCHIVE, 0, qfalse,
+       qfalse)
+G_CVAR(g_suicideRespawnTime, "g_suicideRespawnTime", "15", CVAR_ARCHIVE, 0,
+       qfalse, qfalse)
 G_CVAR(be_disabledFeatures, "be_disabledFeatures", "0", CVAR_ARCHIVE, 0, qfalse,
        qfalse)
 //::OSDF modded

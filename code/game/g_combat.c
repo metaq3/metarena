@@ -618,6 +618,21 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	// don't allow respawn until the death anim is done
 	// g_forcerespawn may force spawning at some later time
 	self->client->respawnTime = level.time + 100;
+	self->client->pers.respawnPenalty = level.time;
+
+	// add penalty to some of MODs
+	switch ( meansOfDeath ) {
+		case MOD_LAVA: {
+			self->client->pers.respawnPenalty += g_lavaRespawnTime.value * 1000.f;
+			break;
+		}
+		case MOD_TRIGGER_HURT:
+		case MOD_SUICIDE: {
+			self->client->pers.respawnPenalty += g_suicideRespawnTime.value * 1000.f;
+			break;
+		}
+		default: break;
+	}
 
 	// remove powerups
 	memset( self->client->ps.powerups, 0, sizeof(self->client->ps.powerups) );
