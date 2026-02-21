@@ -625,6 +625,8 @@ void core_Weapon( void ) {
   ) {
     pm->ps->weaponTime += client->sync.fireSync - level.time - g_oversyncNudge.integer;
 
+    client->sync.fireSync = level.time - pml.msec;
+
     if ( pm->ps->weaponTime > 0 ) {
       return;
     }

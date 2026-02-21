@@ -2039,11 +2039,16 @@ Can be called by either the server or the client
 */
 void Pmove (pmove_t *pmove) {
 	int			finalTime;
+	int			minMsec = g_fixedPmoveMsec.integer;
 
 	finalTime = pmove->cmd.serverTime;
 
 	if ( finalTime < pmove->ps->commandTime ) {
 		return;	// should not happen
+	}
+
+	if ( finalTime < pmove->ps->commandTime + minMsec ) {
+		return; // can happen if client has pmove.msec < minMsec
 	}
 
 	if ( finalTime > pmove->ps->commandTime + 1000 ) {
@@ -2058,21 +2063,27 @@ void Pmove (pmove_t *pmove) {
 
 	// chop the move up if it is too long, to prevent framerate
 	// dependent behavior
-	while ( pmove->ps->commandTime != finalTime ) {
+	while ( finalTime >= pmove->ps->commandTime + minMsec ) {
 		int		msec;
 
 		msec = finalTime - pmove->ps->commandTime;
+
+		if ( msec == 0 ) {
+			break;
+		}
 
 		if ( pmove->pmove_fixed ) {
 			if ( msec > pmove->pmove_msec ) {
 				msec = pmove->pmove_msec;
 			}
+		} else if ( msec > 66 ) {
+			msec = 66;
 		}
-		else {
-			if ( msec > 66 ) {
-				msec = 66;
-			}
+
+		if ( minMsec > 0 && msec > minMsec ) {
+			msec = minMsec;
 		}
+
 		pmove->cmd.serverTime = pmove->ps->commandTime + msec;
 		pmove->movetype = phy_movetype.integer;
 		//::OSDF modded
