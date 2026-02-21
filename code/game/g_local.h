@@ -1,4 +1,26 @@
-// Copyright (C) 1999-2000 Id Software, Inc.
+/*
+===========================================================================
+Copyright (C) 1999-2005 Id Software, Inc.
+Some portions Copyright (C) 2006 Neil Toronto.
+
+This file is part of Unlagged and Quake III Arena source code.
+
+Unlagged and Quake III Arena source code is free software; you can
+redistribute it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either version 2 of
+the License, or (at your option) any later version.
+
+Unlagged and Quake III Arena source code is distributed in the hope that it
+will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Unlagged and Quake III Arena source code; if not, write to the
+Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+02110-1301  USA
+===========================================================================
+*/
 //
 // g_local.h -- local definitions for game module
 
@@ -253,6 +275,10 @@ typedef struct {
 #define MAX_NETNAME 64
 #define MAX_VOTE_COUNT 3
 
+//unlagged - true ping
+#define NUM_PING_SAMPLES 64
+//unlagged - true ping
+
 typedef struct {
   int hits;
   int attacks;
@@ -282,18 +308,37 @@ typedef struct {
 
   qboolean inGame;
 
+//unlagged - client options
+	// these correspond with variables in the userinfo string
+	int			delag;
+	int			debugDelag;
+	int			cmdTimeNudge;
+//unlagged - client options
+//unlagged - lag simulation #2
+	usercmd_t	cmdqueue[MAX_LATENT_CMDS];
+	int			cmdhead;
+//unlagged - lag simulation #2
+//unlagged - true ping
+	int			realPing;
+	int			pingsamples[NUM_PING_SAMPLES];
+	int			samplehead;
+//unlagged - true ping
+
   int stats[OSP_STATS_NUM + WP_MAX_WEAPONS];
   accuracy_t accuracies[WP_MAX_WEAPONS];
 } clientPersistant_t;
 
-// unlagged
+// unlagged - backward reconciliation #1
+// the size of history we'll keep
 #define NUM_CLIENT_HISTORY 64
 
+// everything we need to know to backward reconcile
 typedef struct {
-  vec3_t mins, maxs;
-  vec3_t currentOrigin;
-  int leveltime;
+	vec3_t		mins, maxs;
+	vec3_t		currentOrigin;
+	int			leveltime;
 } clientHistory_t;
+//unlagged - backward reconciliation #1
 
 struct sync_s {
   int fireStart; // time when client started firing
@@ -316,9 +361,6 @@ struct gclient_s {
 
   qboolean noclip;
 
-  int lastCmdTime; // level.time of last usercmd_t, for EF_CONNECTION
-                   // we can't just use pers.lastCommand.time, because
-                   // of the g_sycronousclients case
   int buttons;
   int oldbuttons;
   int latched_buttons;
@@ -371,13 +413,25 @@ struct gclient_s {
 
   char *areabits;
 
-  // unlagged
-  clientHistory_t history[NUM_CLIENT_HISTORY];
-  clientHistory_t saved;
+//unlagged - backward reconciliation #1
+	// the serverTime the button was pressed
+	// (stored before pmove_fixed changes serverTime)
+	int			attackTime;
+	// the head of the history queue
+	int			historyHead;
+	// the history queue
+	clientHistory_t	history[NUM_CLIENT_HISTORY];
+	// the client's saved position
+	clientHistory_t	saved;			// used to restore after time shift
+	// an approximation of the actual server time we received this
+	// command (not in 50ms increments)
+	int			frameOffset;
+//unlagged - backward reconciliation #1
 
-  int historyHead;
-  int frameOffset;
-  int lastUpdateFrame;
+//unlagged - smooth clients #1
+	// the last frame number we got an update from this client
+	int			lastUpdateFrame;
+//unlagged - smooth clients #1
 
   // hitsounds
   struct {
@@ -494,8 +548,10 @@ typedef struct {
   // map rotation
   qboolean denyMapRestart;
 
-  // unlagged
-  int frameStartTime;
+//unlagged - backward reconciliation #4
+	// actual time this server frame started
+	int			frameStartTime;
+//unlagged - backward reconciliation #4
 
   // metarena
   gentity_t *ghostQue[GHOST_QUEUE_SIZE];
@@ -773,14 +829,14 @@ void Svcmd_AbortPodium_f(void);
 //
 // g_unlagged.c
 //
-void G_ResetHistory(gentity_t *ent);
-void G_StoreHistory(gentity_t *ent);
-void G_TimeShiftAllClients(int time, gentity_t *skip);
-void G_UnTimeShiftAllClients(gentity_t *skip);
-void G_DoTimeShiftFor(gentity_t *ent);
-void G_UndoTimeShiftFor(gentity_t *ent);
-void G_UnTimeShiftClient(gentity_t *client);
-void G_PredictPlayerMove(gentity_t *ent, float frametime);
+void G_ResetHistory( gentity_t *ent );
+void G_StoreHistory( gentity_t *ent );
+void G_TimeShiftAllClients( int time, gentity_t *skip );
+void G_UnTimeShiftAllClients( gentity_t *skip );
+void G_DoTimeShiftFor( gentity_t *ent );
+void G_UndoTimeShiftFor( gentity_t *ent );
+void G_UnTimeShiftClient( gentity_t *client );
+void G_PredictPlayerMove( gentity_t *ent, float frametime );
 
 //
 // g_bot.c

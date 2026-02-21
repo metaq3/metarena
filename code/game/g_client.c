@@ -1,4 +1,26 @@
-// Copyright (C) 1999-2000 Id Software, Inc.
+/*
+===========================================================================
+Copyright (C) 1999-2005 Id Software, Inc.
+Some portions Copyright (C) 2006 Neil Toronto.
+
+This file is part of Unlagged and Quake III Arena source code.
+
+Unlagged and Quake III Arena source code is free software; you can
+redistribute it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either version 2 of
+the License, or (at your option) any later version.
+
+Unlagged and Quake III Arena source code is distributed in the hope that it
+will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Unlagged and Quake III Arena source code; if not, write to the
+Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+02110-1301  USA
+===========================================================================
+*/
 //
 #include "bg_public.h"
 #include "g_local.h"
@@ -715,6 +737,20 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 		client->pers.predictItemPickup = qtrue;
 	}
 
+//unlagged - client options
+	// see if the player has opted out
+	s = Info_ValueForKey( userinfo, "cg_delag" );
+	if ( !atoi( s ) ) {
+		client->pers.delag = 0;
+	} else {
+		client->pers.delag = atoi( s );
+	}
+
+	// see if the player is nudging his shots
+	s = Info_ValueForKey( userinfo, "cg_cmdTimeNudge" );
+	client->pers.cmdTimeNudge = atoi( s );
+//unlagged - client options
+
 	// set name
 	Q_strncpyz( oldname, client->pers.netname, sizeof( oldname ) );
 	s = Info_ValueForKey( userinfo, "name" );
@@ -1205,9 +1241,12 @@ void ClientSpawn(gentity_t *ent) {
 	flags = client->ps.eFlags & (EF_TELEPORT_BIT | EF_VOTED | EF_TEAMVOTED);
 	flags ^= EF_TELEPORT_BIT;
 
-	// unlagged
+//unlagged - backward reconciliation #3
+	// we don't want players being backward-reconciled to the place they died
 	G_ResetHistory( ent );
+	// and this is as good a time as any to clear the saved state
 	client->saved.leveltime = 0;
+//unlagged - backward reconciliation #3
 
 	// clear everything but the persistant data
 

@@ -1,4 +1,26 @@
-// Copyright (C) 1999-2000 Id Software, Inc.
+/*
+===========================================================================
+Copyright (C) 1999-2005 Id Software, Inc.
+Some portions Copyright (C) 2006 Neil Toronto.
+
+This file is part of Unlagged and Quake III Arena source code.
+
+Unlagged and Quake III Arena source code is free software; you can
+redistribute it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either version 2 of
+the License, or (at your option) any later version.
+
+Unlagged and Quake III Arena source code is distributed in the hope that it
+will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Unlagged and Quake III Arena source code; if not, write to the
+Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+02110-1301  USA
+===========================================================================
+*/
 //
 
 #include "g_local.h"
@@ -764,16 +786,65 @@ void ClientThink_real( gentity_t *ent ) {
 	if ( ucmd->serverTime > level.time + 200 ) {
 		ucmd->serverTime = level.time + 200;
 //		G_Printf("serverTime <<<<<\n" );
-	} else
-	if ( ucmd->serverTime < level.time - 1000 ) {
+	} else if ( ucmd->serverTime < level.time - 1000 ) {
 		ucmd->serverTime = level.time - 1000;
 //		G_Printf("serverTime >>>>>\n" );
 	}
 
-	// unlagged
+//unlagged - backward reconciliation #4
+	// frameOffset should be about the number of milliseconds into a frame 
+	// this command packet was received, depending on how fast the server
+	// does a G_RunFrame()
 	client->frameOffset = trap_Milliseconds() - level.frameStartTime;
-	client->lastCmdTime = ucmd->serverTime;
+//unlagged - backward reconciliation #4
+
+//unlagged - true ping
+	// save the estimated ping in a queue for averaging later
+
+	// we use level.previousTime to account for 50ms lag correction
+	// besides, this will turn out numbers more like what players are used to
+	client->pers.pingsamples[client->pers.samplehead] = level.previousTime + client->frameOffset - ucmd->serverTime;
+	client->pers.samplehead++;
+	if ( client->pers.samplehead >= NUM_PING_SAMPLES ) {
+		client->pers.samplehead -= NUM_PING_SAMPLES;
+	}
+
+	// initialize the real ping
+	if ( g_truePing.integer ) {
+		int i, sum = 0;
+
+		// get an average of the samples we saved up
+		for ( i = 0; i < NUM_PING_SAMPLES; i++ ) {
+			sum += client->pers.pingsamples[i];
+		}
+
+		client->pers.realPing = sum / NUM_PING_SAMPLES;
+	}
+	else {
+		// if g_truePing is off, use the normal ping
+		client->pers.realPing = client->ps.ping;
+	}
+//unlagged - true ping
+
+//unlagged - backward reconciliation #4
+	// save the command time *before* pmove_fixed messes with the serverTime,
+	// and *after* lag simulation messes with it :)
+	// attackTime will be used for backward reconciliation later (time shift)
+	client->attackTime = ucmd->serverTime;
+//unlagged - backward reconciliation #4
+
+//unlagged - smooth clients #1
+	// keep track of this for later - we'll use this to decide whether or not
+	// to send extrapolated positions for this client
 	client->lastUpdateFrame = level.framenum;
+//unlagged - smooth clients #1
+
+//unlagged - true ping
+	// make sure the true ping is over 0 - with cl_timenudge it can be less
+	if ( client->pers.realPing < 0 ) {
+		client->pers.realPing = 0;
+	}
+//unlagged - true ping
 
 	msec = ucmd->serverTime - client->ps.commandTime;
 	// following others may result in bad times, but we still want
@@ -951,7 +1022,20 @@ void ClientThink_real( gentity_t *ent ) {
 		ent->eventTime = level.time;
 	}
 
-	BG_PlayerStateToEntityState( &ent->client->ps, &ent->s, g_snapVectors.integer );
+//unlagged - smooth clients #2
+	// clients no longer do extrapolation if cg_smoothClients is 1, because
+	// skip correction is all handled server-side now
+	// since that's the case, it makes no sense to store the extra info
+	// in the client's snapshot entity, so let's save a little bandwidth
+/*
+	if (g_smoothClients.integer) {
+		BG_PlayerStateToEntityStateExtraPolate( &ent->client->ps, &ent->s, ent->client->ps.commandTime, qtrue );
+	}
+	else {
+*/
+		BG_PlayerStateToEntityState( &ent->client->ps, &ent->s, g_snapVectors.integer );
+//	}
+//unlagged - smooth clients #2
 
 	SendPendingPredictableEvents( &ent->client->ps );
 
@@ -1032,12 +1116,6 @@ void ClientThink( int clientNum ) {
 
 	ent = g_entities + clientNum;
 	trap_GetUsercmd( clientNum, &ent->client->pers.cmd );
-
-	// mark the time we got info, so we can display the
-	// phone jack if they don't get any for a while
-#if 0 // unlagged
-	ent->client->lastCmdTime = level.time;
-#endif
 
 	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer ) {
 		ClientThink_real( ent );
@@ -1186,7 +1264,20 @@ void ClientEndFrame( gentity_t *ent ) {
 	G_SetClientSound( ent );
 
 	// set the latest info
-	BG_PlayerStateToEntityState( &client->ps, &ent->s, g_snapVectors.integer );
+//unlagged - smooth clients #2
+	// clients no longer do extrapolation if cg_smoothClients is 1, because
+	// skip correction is all handled server-side now
+	// since that's the case, it makes no sense to store the extra info
+	// in the client's snapshot entity, so let's save a little bandwidth
+/*
+	if (g_smoothClients.integer) {
+		BG_PlayerStateToEntityStateExtraPolate( &ent->client->ps, &ent->s, ent->client->ps.commandTime, qtrue );
+	}
+	else {
+*/
+		BG_PlayerStateToEntityState( &ent->client->ps, &ent->s, g_snapVectors.integer );
+//	}
+//unlagged - smooth clients #2
 
 	SendPendingPredictableEvents( &client->ps );
 
@@ -1230,8 +1321,10 @@ void ClientEndFrame( gentity_t *ent ) {
 		}
 	}
 
-	// unlagged
+//unlagged - backward reconciliation #1
+	// store the client's position for backward reconciliation later
 	G_StoreHistory( ent );
+//unlagged - backward reconciliation #1
 
 	// hitsounds
 	if ( client->damage.enemy && client->damage.amount ) {

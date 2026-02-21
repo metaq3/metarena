@@ -14,13 +14,13 @@ int G_Clamp(int value, int min, int max) {
 }
 
 int G_BoundClientTime(gclient_t *client) {
-  if ( client->lastCmdTime > level.time ) {
+  if ( client->attackTime > level.time ) {
     return level.time;
   }
 
-  if ( client->lastCmdTime < level.time - g_maxPredictionNudge.integer ) {
+  if ( client->attackTime < level.time - g_maxPredictionNudge.integer ) {
     return level.time - g_maxPredictionNudge.integer;
   }
 
-  return client->lastCmdTime;
+  return client->attackTime;
 }
